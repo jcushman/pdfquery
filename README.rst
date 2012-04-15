@@ -60,28 +60,28 @@ PDFQuery works by loading a PDF with pdfminer.Layout, converting the layout to a
 and then applying a pyquery wrapper. All three underlying libraries are exposed, so you can use any of their
 interfaces to get at the data you want.
 
-First pdfminer is used to open the document and read its layout.
+First pdfminer opens the document and reads its layout.
 You can access the pdfminer document at ``pdf.doc``::
 
     >>> pdf = pdfquery.PDFQuery("examples/sample.pdf")
     >>> pdf.doc
     <pdfminer.pdfparser.PDFDocument object at 0xd95c90>
-    >>> pdf.doc.catalog
+    >>> pdf.doc.catalog # fetch attribute of underlying pdfminer document
     {'JT': <PDFObjRef:14>, 'PageLabels': <PDFObjRef:10>, 'Type': /Catalog, 'Pages': <PDFObjRef:12>, 'Metadata': <PDFObjRef:13>}
 
-Next the layout is turned into an lxml.etree with a pyquery wrapper. After you call ``pdf.load()``, you can
-access the etree at ``pdf.tree``, and the pyquery wrapper at ``pdf.pq``::
+Next the layout is turned into an lxml.etree with a pyquery wrapper. After you call ``pdf.load()`` (by far the most
+expensive operation in the process), you can access the etree at ``pdf.tree``, and the pyquery wrapper at ``pdf.pq``::
 
     >>> pdf.load()
     >>> pdf.tree
     <lxml.etree._ElementTree object at 0x106a285f0>
-    >>> tree.write("test2.xml", pretty_print=True, encoding="utf-8")
-    >>> tree.xpath('//*/LTPage')
+    >>> pdf.tree.write("test2.xml", pretty_print=True, encoding="utf-8")
+    >>> pdf.tree.xpath('//*/LTPage')
     [<Element LTPage at 0x994cb0>, <Element LTPage at 0x994a58>]
     >>> pdf.pq('LTPage[pageid=1] :contains("Your first name")')
     [<LTTextLineHorizontal>]
 
-It will be faster if you call ``load()`` with only the page numbers you need. For example::
+You'll save some time and memory if you call ``load()`` with only the page numbers you need. For example::
 
     >>> pdf.load(0, 2, 3, range(4,8))
 
@@ -96,24 +96,30 @@ by xpath or pyquery::
 Finding what you want
 ----
 
-PDFs are internally messy, so it's usually not as helpful to find things based on the document structure. Instead the
-most reliable selectors are the text contents of static labels, and location on the page. PDF coordinates are given in
-points (72 to the inch) starting from the bottom left corner. PDFMiner (and so PDFQuery) describes page locations in
-terms of bounding boxes, or ``bbox``es. A bbox consists of four coordinates: the X and Y of the lower left corner,
-and the X and Y of the upper right corner.
+PDFs are internally messy, so it's usually not helpful to find things based on document structure or element classes
+the way you would with HTML. Instead the most reliable selectors are the static labels on the page,
+which you can find by searching for their text contents, and physical location on the page. PDF coordinates are given
+in points (72 to the inch) starting from the bottom left corner. PDFMiner (and so PDFQuery) describes page locations
+in terms of bounding boxes, or ``bbox``es. A bbox consists of four coordinates: the X and Y of the lower left
+corner, and the X and Y of the upper right corner.
 
 If you're scraping text that's always in the same place on the page, the easiest way is to use Acrobat Pro's
-Measurement Tool, Photoshop, or a similar tool to measure the distance in points from the lower left corner of the
-page, and use that to craft a selector like ``:in_bbox("x0,y0,x1,y1")`` (see below for custom selectors).
+Measurement Tool, Photoshop, or a similar tool to measure distances (in points) from the lower left corner of the
+page, and use those distances to craft a selector like ``:in_bbox("x0,y0,x1,y1")`` (see below for more on ``in_bbox``).
 
 If you're scraping text that might be in different parts of the page, the same basic technique applies,
 but you'll first have to find an element with consistent text that appears a consistent distance from the text you
 want, and then calculate the bbox relative to that element. See the Quick Start for an example of that approach.
 
+If both of those fail, your best bet is to dump the xml using ```pdf.tree.write(filename, pretty_print=True)```,
+and see if you can find any other structure, tags or elements that reliably identify the part you're looking for.
+This is also helpful when you're trying to figure out why your selectors don't match ...
+
 Custom Selectors
 ----------------
 
-The version of pyquery returned by pdf.pq supports some PDF-specific selectors.
+The version of pyquery returned by pdf.pq supports some PDF-specific selectors to find elements by location on the
+page.
 
 * \:in_bbox("x0,y0,x1,y1"): Matches only elements that fit entirely within the given bbox.
 
@@ -132,33 +138,37 @@ request ...)
 Bulk Data Scraping
 ------------------
 
-Often you're going to want to grab a bunch of different data from a PDF, using the same process:
-find a chunk of the document using a pyquery selector or Xpath; convert the resulting text; and associate it
-with a keyword to be used later.
+Often you're going to want to grab a bunch of different data from a PDF, using the same repetitive process:
+(1) find an element of the document using a pyquery selector or Xpath; (2) parse the resulting text; and (3) store it
+in a dict to be used later.
 
 The ``extract`` method simplifies that process. Given a list of keywords and selectors::
 
-    >>> pdf.extract( [
-          ('last_name', ':in_bbox("315,680,395,700")'                                         ),
-          ('year',      ':contains("Form 1040A (")',    lambda match: int(match.text()[-5:-1]))
+    >>> pdf.extract([
+          ('last_name', ':in_bbox("315,680,395,700")'),
+          ('year', ':contains("Form 1040A (")', lambda match: int(match.text()[-5:-1]))
      ])
 
-The result is a dictionary matching keywords to pyquery result sets, optionally processed through the supplied
-formatting function::
+the ```extract``` method returns a dictionary (by default) with a pyquery result set for each keyword,
+optionally processed through the supplied formatting function. In this example the result is::
 
     {'last_name': [<LTTextLineHorizontal>], 'year': 2007}
+
+(It's often helpful to start with ``('with_formatter', 'text')`` so you get results like "Michaels" instead of
+``[<LTTextLineHorizontal>]``. See Special Keywords below for more.)
 
 Search Target
 ~~~~~~~~~~~~~
 
-By default, ``extract`` searches the entire tree. If you want to limit the search to part of the tree,
-pass in a pyquery object for that element as the second parameter.
+By default, ``extract`` searches the entire tree (or the part of the document loaded earlier by ``load()``,
+it it was limited to particular pages). If you want to limit the search to a part of the tree that you fetched with
+``pdf.pq()`` earlier, pass that in as the second parameter after the list of searches.
 
 Formatting Functions
 ~~~~~~~~~~~~~~~~~~~~
 
-Notice that the second line contains an optional third paramater -- a formatting function. The formatting function
-will be passed a pyquery match result, so ``lambda match: match.text()`` will return the text contents of the
+Notice that the 'year' example above contains an optional third paramater -- a formatting function. The formatting
+function will be passed a pyquery match result, so ``lambda match: match.text()`` will return the text contents of the
 matched elements.
 
 Filtering Functions
@@ -166,17 +176,17 @@ Filtering Functions
 
 Instead of a string, the selector can be a filtering function returning a boolean::
 
-    >>> def big_elements():
-            return float(this.get('width',0)) * float(this.get('height',0)) > 40000
     >>> pdf.extract([('big', big_elements)])
     {'big': [<LTPage>, <LTTextBoxHorizontal>, <LTRect>, <LTRect>, <LTPage>, <LTTextBoxHorizontal>, <LTRect>]}
+
+(See Custom Selectors above for how to define functions like ``big_elements``.)
 
 Special Keywords
 ~~~~~~~~~~~~~~~~
 
-``extract`` also accepts two special keywords that set defaults for the searches listed afterward. Note that you
-can include the same special keyword more than once to change the setting (as demonstrated in the Quick Start
-section).
+``extract`` also looks for two special keywords in the list of searches that set defaults for the searches listed
+afterward. Note that you can include the same special keyword more than once to change the setting, as demonstrated
+in the Quick Start section. The keywords are\:
 
 with_parent
 +++++++++++
