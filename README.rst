@@ -241,12 +241,16 @@ preprocessing of the element tree:
 * merge_tags: consecutive runs of these elements will be merged together, with the text of following elements
 appended to the first element. This is useful for keeping the size of the tree down,
 but it might help to turn it off if you want to select individual characters regardless of their containers.
+
 * round_floats and round_digits: if round_floats is True, numbers will be rounded to round_digits places. This is
 almost always good.
+
 * input_text_formatter: a function that takes a string and returns a modified string,
 to be applied to the text content of elements.
+
 * normalize_spaces: if True (and input_text_formatter isn't otherwise set), sets input_text_formatter to replace \s+
 with a single space.
+
 * resort: if True, elements will be sorted such that any element fully within the bounding box of another element
 becomes a child of that element.
 
@@ -274,7 +278,7 @@ Given an etree element, returns the pdfminer layout object from which it was gen
 
 Initialize the pdf.tree and pdf.pq objects. This will be called implicitly by pdf.extract(),
 but it's more efficient to call it explicitly with just the page numbers you need. Page numbers can be any
-combination of integers and lists, e.g. ``pdf.load(0,2,3,[4,5,6],range(10,15)``.
+combination of integers and lists, e.g. ``pdf.load(0,2,3,[4,5,6],range(10,15))``.
 
 Public But Less Useful Methods
 ====
@@ -306,3 +310,8 @@ Given a page number, return the appropriate pdfminer PDFPage object.
 Wrap a given lxml element tree in pyquery.
 If no tree is supplied, will generate one from given page numbers, or all page numbers.
 
+::
+
+    get_tree(*page_numbers)
+
+Generate an etree for the given page numbers. ``*page_numbers`` can be the same form as in ``load()``.
