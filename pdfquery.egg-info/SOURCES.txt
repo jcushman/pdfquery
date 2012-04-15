@@ -1,0 +1,11 @@
+CHANGES.txt
+LICENSE.txt
+MANIFEST.in
+setup.py
+pdfquery/__init__.py
+pdfquery/pdfquery.py
+pdfquery.egg-info/PKG-INFO
+pdfquery.egg-info/SOURCES.txt
+pdfquery.egg-info/dependency_links.txt
+pdfquery.egg-info/requires.txt
+pdfquery.egg-info/top_level.txt

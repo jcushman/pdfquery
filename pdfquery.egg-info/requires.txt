@@ -1,0 +1,3 @@
+pdfminer
+pyquery
+lxml
