@@ -13,7 +13,7 @@ Quick Start
 
 The basic idea is to transform a PDF document into an element tree so we can find items with JQuery-like selectors
 using pyquery. Suppose we're trying to extract a name from a set of PDFs, but all we know is that it appears
-underneath the words "Your first name and initial"::
+underneath the words "Your first name and initial" in each PDF::
 
     >>> pdf = pdfquery.PDFQuery("examples/sample.pdf")
     >>> pdf.load()
@@ -50,11 +50,12 @@ Result::
      'year': 2007,
      'oath': 'Under penalties of perjury, I ...',}
 
+------
 Usage
-=====
+------
 
 Data Models
------------
+===========
 
 PDFQuery works by loading a PDF with pdfminer.Layout, converting the layout to an etree with lxml.etree,
 and then applying a pyquery wrapper. All three underlying libraries are exposed, so you can use any of their
@@ -94,7 +95,7 @@ by xpath or pyquery::
     <LTTextLineHorizontal 143.651,714.694,213.083,721.661 u'Your  first  name  and  initial\n'>
 
 Finding what you want
-----
+=====
 
 PDFs are internally messy, so it's usually not helpful to find things based on document structure or element classes
 the way you would with HTML. Instead the most reliable selectors are the static labels on the page,
@@ -116,7 +117,7 @@ and see if you can find any other structure, tags or elements that reliably iden
 This is also helpful when you're trying to figure out why your selectors don't match ...
 
 Custom Selectors
-----------------
+=====
 
 The version of pyquery returned by pdf.pq supports some PDF-specific selectors to find elements by location on the
 page.
@@ -136,7 +137,7 @@ If you need a selector that isn't supported, you can write a filtering function 
 request ...)
 
 Bulk Data Scraping
-------------------
+=====
 
 Often you're going to want to grab a bunch of different data from a PDF, using the same repetitive process:
 (1) find an element of the document using a pyquery selector or Xpath; (2) parse the resulting text; and (3) store it
@@ -217,13 +218,15 @@ If you want to stop filtering results, you can use::
 
     ('with_formatter', None)
 
+----
 Object Reference
-================
+----
 
 Public Methods
---------------
+====
 
 ::
+
     PDFQuery(   filename,
                 merge_tags=('LTChar', 'LTAnon'),
                 round_floats=True,
@@ -248,6 +251,7 @@ with a single space.
 becomes a child of that element.
 
 ::
+
     extract(    searches,
                 tree=None,
                 as_dict=True)
@@ -259,11 +263,13 @@ See "Bulk Data Scraping."
 * as_dict: if changed to False, will return a list instead of a dict to preserve the order of the results.
 
 ::
+
     get_obj(el)
 
 Given an etree element, returns the pdfminer layout object from which it was generated.
 
 ::
+
     load(*page_numbers)
 
 Initialize the pdf.tree and pdf.pq objects. This will be called implicitly by pdf.extract(),
@@ -271,26 +277,30 @@ but it's more efficient to call it explicitly with just the page numbers you nee
 combination of integers and lists, e.g. ``pdf.load(0,2,3,[4,5,6],range(10,15)``.
 
 Public But Less Useful Methods
-----
+====
 
 These are mostly used internally, but might be helpful sometimes ...
 
 ::
+
     get_layout(page)
 
 Given a page number (zero-indexed) or pdfminer PDFPage object, return the LTPage layout object for that page.
 
 ::
+
     get_layouts()
 
 Return list of all layouts (equivalent to calling get_layout() for each page).
 
 ::
+
     get_page(page_number)
 
 Given a page number, return the appropriate pdfminer PDFPage object.
 
 ::
+
     get_pyquery(tree=None, page_numbers=[])
 
 Wrap a given lxml element tree in pyquery.
