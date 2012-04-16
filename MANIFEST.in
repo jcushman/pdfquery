@@ -1,2 +1,2 @@
-include *.txt
-include examples *.pdf *.py
+include *.txt *.rst
+include examples/*

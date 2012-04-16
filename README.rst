@@ -1,9 +1,9 @@
 ========
 PDFQuery
 ========
-----------------------------------------------------------
+------------------------------------------------------------
 Concise, friendly PDF scraping using JQuery or XPath syntax.
-----------------------------------------------------------
+------------------------------------------------------------
 
 PDFQuery is a light wrapper around pdfminer, lxml and pyquery. It's designed to reliably extract data from sets of
 PDFs with as little code as possible.
@@ -11,6 +11,11 @@ PDFs with as little code as possible.
 *Note: This is an initial release. It works for me, but if let me know if it doesn't work as expected for you.*
 
 .. contents:: **Table of Contents**
+
+Installation
+============
+
+``easy_install pdfquery`` or ``pip install pdfquery``.
 
 Quick Start
 ===========
@@ -99,13 +104,13 @@ by xpath or pyquery::
     <LTTextLineHorizontal 143.651,714.694,213.083,721.661 u'Your  first  name  and  initial\n'>
 
 Finding what you want
-=====
+=========================
 
 PDFs are internally messy, so it's usually not helpful to find things based on document structure or element classes
 the way you would with HTML. Instead the most reliable selectors are the static labels on the page,
 which you can find by searching for their text contents, and physical location on the page. PDF coordinates are given
 in points (72 to the inch) starting from the bottom left corner. PDFMiner (and so PDFQuery) describes page locations
-in terms of bounding boxes, or ``bbox``es. A bbox consists of four coordinates: the X and Y of the lower left
+in terms of bounding boxes, or bboxes. A bbox consists of four coordinates: the X and Y of the lower left
 corner, and the X and Y of the upper right corner.
 
 If you're scraping text that's always in the same place on the page, the easiest way is to use Acrobat Pro's
@@ -121,7 +126,7 @@ and see if you can find any other structure, tags or elements that reliably iden
 This is also helpful when you're trying to figure out why your selectors don't match ...
 
 Custom Selectors
-=====
+====================
 
 The version of pyquery returned by pdf.pq supports some PDF-specific selectors to find elements by location on the
 page.
@@ -141,7 +146,7 @@ If you need a selector that isn't supported, you can write a filtering function 
 request ...)
 
 Bulk Data Scraping
-=====
+====================
 
 Often you're going to want to grab a bunch of different data from a PDF, using the same repetitive process:
 (1) find an element of the document using a pyquery selector or Xpath; (2) parse the resulting text; and (3) store it
@@ -222,12 +227,12 @@ If you want to stop filtering results, you can use::
 
     ('with_formatter', None)
 
-----
+----------------
 Object Reference
-----
+----------------
 
 Public Methods
-====
+================
 
 ::
 
@@ -242,21 +247,21 @@ Public Methods
 Initialization function. Usually you'll only need to pass in the filename. The rest of the arguments control
 preprocessing of the element tree:
 
-* merge_tags: consecutive runs of these elements will be merged together, with the text of following elements
-appended to the first element. This is useful for keeping the size of the tree down,
-but it might help to turn it off if you want to select individual characters regardless of their containers.
+*   merge_tags: consecutive runs of these elements will be merged together, with the text of following elements
+    appended to the first element. This is useful for keeping the size of the tree down,
+    but it might help to turn it off if you want to select individual characters regardless of their containers.
 
-* round_floats and round_digits: if round_floats is True, numbers will be rounded to round_digits places. This is
-almost always good.
+*   round_floats and round_digits: if round_floats is True, numbers will be rounded to round_digits places. This is
+    almost always good.
 
-* input_text_formatter: a function that takes a string and returns a modified string,
-to be applied to the text content of elements.
+*   input_text_formatter: a function that takes a string and returns a modified string,
+    to be applied to the text content of elements.
 
-* normalize_spaces: if True (and input_text_formatter isn't otherwise set), sets input_text_formatter to replace \s+
-with a single space.
+*   normalize_spaces: if True (and input_text_formatter isn't otherwise set), sets input_text_formatter to replace \s+
+    with a single space.
 
-* resort: if True, elements will be sorted such that any element fully within the bounding box of another element
-becomes a child of that element.
+*   resort: if True, elements will be sorted such that any element fully within the bounding box of another element
+    becomes a child of that element.
 
 ::
 
@@ -279,7 +284,7 @@ but it's more efficient to call it explicitly with just the page numbers you nee
 combination of integers and lists, e.g. ``pdf.load(0,2,3,[4,5,6],range(10,15))``.
 
 Public But Less Useful Methods
-====
+================================
 
 These are mostly used internally, but might be helpful sometimes ...
 

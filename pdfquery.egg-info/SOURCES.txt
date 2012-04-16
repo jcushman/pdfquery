@@ -1,7 +1,9 @@
 CHANGES.txt
 LICENSE.txt
 MANIFEST.in
+README.rst
 setup.py
+examples/sample.pdf
 pdfquery/__init__.py
 pdfquery/pdfquery.py
 pdfquery.egg-info/PKG-INFO
