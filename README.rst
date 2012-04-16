@@ -320,8 +320,9 @@ If no tree is supplied, will generate one from given page numbers, or all page n
 Generate an etree for the given page numbers. ``*page_numbers`` can be the same form as in ``load()``.
 
 
+----------------------------------------
 Documentation for Underlying Libraries
-======================================
+----------------------------------------
 
 * PDFMiner (pdf.doc): pdfminer_homepage_, pdfminer_documentation_.
 
