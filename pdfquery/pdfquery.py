@@ -174,8 +174,11 @@ class PDFQuery(object):
             self.input_text_formatter = False
 
         # open doc
-        if type(file) == str:
-            file = open(file, 'rb')
+        if not hasattr(file, 'read'):
+            try:
+                file = open(file, 'rb')
+            except TypeError:
+                raise TypeError("File must be file object or filepath string.")
         parser = PDFParser(file)
         doc = QPDFDocument()
         parser.set_document(doc)
@@ -241,7 +244,7 @@ class PDFQuery(object):
                 search = list(search) + [formatter]
             key, search, tmp_formatter = search
             if key == 'with_formatter':
-                if type(search) == str: # is a pyquery method name, e.g. 'text'
+                if isinstance(search, basestring): # is a pyquery method name, e.g. 'text'
                     formatter = lambda o, search=search: getattr(o, search)()
                 elif hasattr(search, '__call__') or not search: # is a method, or None to end formatting
                     formatter = search
