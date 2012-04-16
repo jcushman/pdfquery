@@ -150,7 +150,7 @@ parser.set_element_class_lookup(parser_lookup)
 # main class
 
 class PDFQuery(object):
-    def __init__(self, filename, 
+    def __init__(self, file,
                     merge_tags=('LTChar', 'LTAnon'),
                     round_floats=True,
                     round_digits=3,
@@ -159,7 +159,6 @@ class PDFQuery(object):
                     resort=True,
                     ):
         # store input
-        self.filename = filename
         self.merge_tags = merge_tags
         self.round_floats = round_floats
         self.round_digits = round_digits
@@ -175,8 +174,9 @@ class PDFQuery(object):
             self.input_text_formatter = False
 
         # open doc
-        fp = open(filename, 'rb')
-        parser = PDFParser(fp)
+        if type(file) == str:
+            file = open(file, 'rb')
+        parser = PDFParser(file)
         doc = QPDFDocument()
         parser.set_document(doc)
         doc.set_parser(parser)
@@ -185,6 +185,7 @@ class PDFQuery(object):
         self.parser = parser
         self.tree = None
         self.pq = None
+        self.file = file
 
         # set up layout parsing
         rsrcmgr = PDFResourceManager()

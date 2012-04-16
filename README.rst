@@ -236,7 +236,7 @@ Public Methods
 
 ::
 
-    PDFQuery(   filename,
+    PDFQuery(   file,
                 merge_tags=('LTChar', 'LTAnon'),
                 round_floats=True,
                 round_digits=3,
@@ -244,7 +244,8 @@ Public Methods
                 normalize_spaces=True,
                 resort=True)
 
-Initialization function. Usually you'll only need to pass in the filename. The rest of the arguments control
+Initialization function. Usually you'll only need to pass in the file (file object or path). The rest of the arguments
+control
 preprocessing of the element tree:
 
 *   merge_tags: consecutive runs of these elements will be merged together, with the text of following elements
