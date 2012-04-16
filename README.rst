@@ -8,6 +8,10 @@ Concise, friendly PDF scraping using JQuery or XPath syntax.
 PDFQuery is a light wrapper around pdfminer, lxml and pyquery. It's designed to reliably extract data from sets of
 PDFs with as little code as possible.
 
+*Note: This is an initial release. It works for me, but if let me know if it doesn't work as expected for you.*
+
+.. contents:: **Table of Contents**
+
 Quick Start
 ===========
 
@@ -91,7 +95,7 @@ default the tree is processed to combine individual character nodes, remove extr
 and sort the tree spatially. You can always get back to the original pdfminer Layout object from an element fetched
 by xpath or pyquery::
 
-    >>> pdf.get_obj( pdf.pq(':contains("Your first name and initial")')[0] )
+    >>> pdf.pq(':contains("Your first name and initial")')[0].layout
     <LTTextLineHorizontal 143.651,714.694,213.083,721.661 u'Your  first  name  and  initial\n'>
 
 Finding what you want
@@ -130,7 +134,7 @@ If you need a selector that isn't supported, you can write a filtering function 
 
     >>> def big_elements():
         return float(this.get('width',0)) * float(this.get('height',0)) > 40000
-    >>> pdf.pq('LTPage[pageid=1] *').filter(big_elements)
+    >>> pdf.pq('LTPage[page_index=1] *').filter(big_elements)
     [<LTTextBoxHorizontal>, <LTRect>, <LTRect>]
 
 (If you come up with any particularly useful filters, patch them into pdfquery.py as selectors and submit a pull
@@ -195,7 +199,7 @@ with_parent
  The ``with_parent`` keyword limits the following searches to children of the parent search. For example::
 
     >>> pdf.extract([
-         ('with_parent','LTPage[pageid=1]'),
+         ('with_parent','LTPage[page_index=1]'),
          ('last_name', ':in_bbox("315,680,395,700")') # only matches elements on page 1
      ])
 
@@ -268,12 +272,6 @@ See "Bulk Data Scraping."
 
 ::
 
-    get_obj(el)
-
-Given an etree element, returns the pdfminer layout object from which it was generated.
-
-::
-
     load(*page_numbers)
 
 Initialize the pdf.tree and pdf.pq objects. This will be called implicitly by pdf.extract(),
@@ -315,3 +313,21 @@ If no tree is supplied, will generate one from given page numbers, or all page n
     get_tree(*page_numbers)
 
 Generate an etree for the given page numbers. ``*page_numbers`` can be the same form as in ``load()``.
+
+
+Documentation for Underlying Libraries
+======================================
+
+* PDFMiner (pdf.doc): pdfminer_homepage_, pdfminer_documentation_.
+
+.. _pdfminer_homepage: http://www.unixuser.org/~euske/python/pdfminer/
+.. _pdfminer_documentation: http://www.unixuser.org/~euske/python/pdfminer/programming.html
+
+* LXML.etree (pdf.tree): lxml_homepage_, tutorial_.
+
+.. _lxml_homepage: http://lxml.de/index.html
+.. _tutorial: http://lxml.de/tutorial.html
+
+* PyQuery (pdf.pq): pyquery_documentation_.
+
+.. _pyquery_documentation: http://packages.python.org/pyquery/

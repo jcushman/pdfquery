@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 import re
 
 from pdfminer.pdfparser import PDFParser, PDFDocument
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.layout import LAParams, LTChar, LTImage, LTPage #LTTextBox, LTTextLine, LTFigure, 
 from pdfminer.converter import PDFPageAggregator
+from pdfminer.pdftypes import resolve1
 
 from pyquery import PyQuery
 from lxml import cssselect, etree
@@ -73,6 +75,78 @@ def _flatten(l, ltypes=(list, tuple)):
         i += 1
     return ltype(l)
 
+# custom PDFDocument class
+class QPDFDocument(PDFDocument):
+    def get_page_number(self, index):
+        """
+        Given an index, return page label as specified by catalog['PageLabels']['Nums']
+        Nums == [   0 << /S /r >>
+                    4 << /S /D >>
+                    7 << /S /D /P (A−) /St 8>>
+                ]
+                    /S = [
+                            D Decimal arabic numerals
+                            R Uppercase roman numerals
+                            r Lowercase roman numerals
+                            A Uppercase letters (A to Z for the first 26 pages, AA to ZZ for the next 26, and so on)
+                            a Lowercase letters (a to z for the first 26 pages, aa to zz for the next 26, and so on)
+                        ] (if no /S, just use prefix ...)
+                    /P = text string label
+                    /St = integer start value
+        """
+        try:
+            nums = resolve1(self.catalog['PageLabels'])['Nums'] # e.g. [ 0 {settings} 2 {settings} 20
+            # {settings} ...]
+            assert len(nums) > 1 and len(nums) % 2 == 0
+        except:
+            return ""
+        for i in range(len(nums)-2,-1,-2): # find highest page number lower than requested page
+            if nums[i] <= index:
+                break
+        settings = nums[i+1].resolve()
+        page_num = ""
+        if 'S' in settings: # show a digit
+            page_num = index - nums[i]
+            if 'St' in settings: # alternate start value
+                page_num += settings['St']
+            else:
+                page_num += 1
+            num_type = settings['S'].name
+            if num_type.lower() == 'r': # roman (upper or lower)
+                import roman
+                page_num = roman.toRoman(page_num)
+                if num_type == 'r':
+                    page_num = page_num.lower()
+            elif num_type.lower() == 'a': # letters
+                # a to z for the first 26 pages, aa to zz for the next 26, and so on
+                letter = chr(page_num % 26 + 65)
+                letter *= page_num / 26 + 1
+                if num_type == 'a':
+                    letter = letter.lower()
+                page_num = letter
+            else: #if num_type == 'D': # decimal arabic
+                page_num = unicode(page_num)
+        if 'P' in settings: # page prefix
+            page_num = settings['P']+page_num
+        return page_num
+
+
+# create etree parser using custom Element class
+
+class LayoutElement(etree.ElementBase):
+    @property
+    def layout(self):
+        if not hasattr(self, '_layout'):
+            print "setting to None"
+            self._layout = None
+        return self._layout
+    @layout.setter
+    def layout(self, value):
+        self._layout = value
+parser_lookup = etree.ElementDefaultClassLookup(element=LayoutElement)
+parser = etree.XMLParser()
+parser.set_element_class_lookup(parser_lookup)
+
 # main class
 
 class PDFQuery(object):
@@ -103,7 +177,7 @@ class PDFQuery(object):
         # open doc
         fp = open(filename, 'rb')
         parser = PDFParser(fp)
-        doc = PDFDocument()
+        doc = QPDFDocument()
         parser.set_document(doc)
         doc.set_parser(parser)
         doc.initialize()
@@ -114,14 +188,14 @@ class PDFQuery(object):
 
         # set up layout parsing
         rsrcmgr = PDFResourceManager()
-        laparams = LAParams()
+        laparams = LAParams(all_texts=True, detect_vertical=True)
         self.device = PDFPageAggregator(rsrcmgr, laparams=laparams)
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
 
         # caches
         self._pages = []
-        self._nodes = []
         self._pages_iter = None
+        self._elements = []
 
     def load(self, *page_numbers):
         """
@@ -145,11 +219,11 @@ class PDFQuery(object):
 
     def extract(self, searches, tree=None, as_dict=True):
         """
-            >>> page = pdf.extract( [ ['pages', 'LTPage'] ])
-            >>> page
-            [['pages', [<LTPage>, <LTPage>]]]
-            >>> pdf.extract( [ ['stuff', ':in_bbox("100,100,400,400")'] ], page[0][1][0])
-            [['stuff', [<LTTextLineHorizontal>, <LTTextBoxHorizontal>,...
+            >>> foo = pdf.extract( [ ['pages', 'LTPage'] ])
+            >>> foo
+            {'pages': [<LTPage>, <LTPage>]}
+            >>> pdf.extract( [ ['bar', ':in_bbox("100,100,400,400")'] ], foo['pages'][0])
+            {'bar': [<LTTextLineHorizontal>, <LTTextBoxHorizontal>,...
         """
         if self.tree is None or self.pq is None:
             self.load()
@@ -185,10 +259,6 @@ class PDFQuery(object):
         if as_dict:
             results = dict(results)
         return results
-
-    def get_obj(self, el):
-        """ Get layout object associated with given etree element. """
-        return self._nodes[ int(el.attrib['_obj_id']) ]
     
 
 
@@ -206,7 +276,7 @@ class PDFQuery(object):
                 tree = self.tree
             else:
                 tree = self.get_tree(page_numbers)
-        if type(tree) == etree._ElementTree:
+        if hasattr(tree, 'getroot'):
             tree = tree.getroot()
         return PyQuery(tree)
 
@@ -215,15 +285,19 @@ class PDFQuery(object):
             Return lxml.etree.ElementTree for entire document, or page numbers given if any.
         """
         # set up root
-        root = etree.Element("pdfxml")
+        root = parser.makeelement("pdfxml")
         for k, v in self.doc.info[0].items():
-            root.set(k, v)
+            root.set(k, unicode(v))
         # add pages
         if page_numbers:
-            pages = [self.get_layout(self.get_page(n)) for n in _flatten(page_numbers)]
+            pages = [[n, self.get_layout(self.get_page(n))] for n in _flatten(page_numbers)]
         else:
-            pages = self.get_layouts()
-        root.extend( self._xmlize(page) for page in pages )
+            pages = enumerate(self.get_layouts())
+        for n, page in pages:
+            page = self._xmlize(page)
+            page.set('page_index', unicode(n))
+            page.set('page_label', self.doc.get_page_number(n))
+            root.append(page)
         self._clean_text(root)
         # wrap root in ElementTree
         return etree.ElementTree(root)
@@ -254,13 +328,11 @@ class PDFQuery(object):
             tags.update( self._getattrs(node, 'fontname','adv','upright','size') )
         elif type(node) == LTPage:
             tags.update( self._getattrs(node, 'pageid','rotate') )
-
-        # store node in cache so we can get back to it from xml
-        self._nodes += [node]
-        tags['_obj_id'] = unicode(len(self._nodes)-1)
           
         # create node
-        branch = etree.Element(node.__class__.__name__, tags)
+        branch = parser.makeelement(node.__class__.__name__, tags)
+        branch.layout = node
+        self._elements += [branch] # make sure layout keeps state
         if root is None:
             root = branch
 
@@ -347,7 +419,5 @@ class PDFQuery(object):
 
 if __name__ == "__main__":
     import doctest
-    doctest.testmod(extraglobs={'pdf': PDFQuery("../examples/sample.pdf")}, optionflags=doctest.ELLIPSIS)
-    #from IPython.Shell import IPShellEmbed
-    #ipshell = IPShellEmbed()
-    #ipshell()
+    pdf = PDFQuery("../examples/sample.pdf")
+    doctest.testmod(extraglobs={'pdf': pdf}, optionflags=doctest.ELLIPSIS)
