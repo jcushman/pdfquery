@@ -1,6 +1,6 @@
 Metadata-Version: 1.0
 Name: pdfquery
-Version: 0.1.2
+Version: 0.1.3
 Summary: Concise and friendly PDF scraper using JQuery or XPath selectors.
 Home-page: https://github.com/jcushman/pdfquery
 Author: Jack Cushman
@@ -19,6 +19,11 @@ Description: ========
         *Note: This is an initial release. It works for me, but if let me know if it doesn't work as expected for you.*
         
         .. contents:: **Table of Contents**
+        
+        Installation
+        ============
+        
+        ``easy_install pdfquery`` or ``pip install pdfquery``.
         
         Quick Start
         ===========
@@ -239,7 +244,7 @@ Description: ========
         
         ::
         
-            PDFQuery(   filename,
+            PDFQuery(   file,
                         merge_tags=('LTChar', 'LTAnon'),
                         round_floats=True,
                         round_digits=3,
@@ -247,7 +252,8 @@ Description: ========
                         normalize_spaces=True,
                         resort=True)
         
-        Initialization function. Usually you'll only need to pass in the filename. The rest of the arguments control
+        Initialization function. Usually you'll only need to pass in the file (file object or path). The rest of the arguments
+        control
         preprocessing of the element tree:
         
         *   merge_tags: consecutive runs of these elements will be merged together, with the text of following elements
@@ -323,8 +329,9 @@ Description: ========
         Generate an etree for the given page numbers. ``*page_numbers`` can be the same form as in ``load()``.
         
         
+        ----------------------------------------
         Documentation for Underlying Libraries
-        ======================================
+        ----------------------------------------
         
         * PDFMiner (pdf.doc): pdfminer_homepage_, pdfminer_documentation_.
         
