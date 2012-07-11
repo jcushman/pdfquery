@@ -8,7 +8,13 @@ Concise, friendly PDF scraping using JQuery or XPath syntax.
 PDFQuery is a light wrapper around pdfminer, lxml and pyquery. It's designed to reliably extract data from sets of
 PDFs with as little code as possible.
 
-*Note: This is an initial release. It works for me, but if let me know if it doesn't work as expected for you.*
+*Performance Note:* The initial call to pdf.load() runs very slowly, because the underlying
+pdfminer library has to compare every element on the page to every other element.
+It will run approximately 5 times faster (in my tests) if you apply
+these_two_ patches_ to pdfminer.
+
+.. _these_two: https://github.com/euske/pdfminer/pull/15
+.. _patches: https://github.com/euske/pdfminer/pull/16
 
 .. contents:: **Table of Contents**
 
