@@ -290,8 +290,9 @@ class PDFQuery(object):
         """
         # set up root
         root = parser.makeelement("pdfxml")
-        for k, v in self.doc.info[0].items():
-            root.set(k, unicode(v))
+        if self.doc.info:                           #not all PDFs seem to have this info section
+            for k, v in self.doc.info[0].items():
+                root.set(k, unicode(v))
         # add pages
         if page_numbers:
             pages = [[n, self.get_layout(self.get_page(n))] for n in _flatten(page_numbers)]
