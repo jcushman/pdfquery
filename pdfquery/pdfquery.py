@@ -3,7 +3,7 @@ import re
 
 from pdfminer.pdfparser import PDFParser, PDFDocument
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
-from pdfminer.layout import LAParams, LTChar, LTImage, LTPage #LTTextBox, LTTextLine, LTFigure, 
+from pdfminer.layout import LAParams, LTChar, LTImage, LTPage #LTTextBox, LTTextLine, LTFigure,
 from pdfminer.converter import PDFPageAggregator
 from pdfminer.pdftypes import resolve1
 
@@ -30,7 +30,7 @@ def _xpath_overlaps_bbox(self, xpath, expr):
     xpath.add_post_condition("@x1 >= %s" % x0)
     xpath.add_post_condition("@y1 >= %s" % y0)
     return xpath
-cssselect.Function._xpath_in_bbox = _xpath_in_bbox
+cssselect.parser.Function._xpath_in_bbox = _xpath_in_bbox
 
 
 # Re-sort the PDFMiner Layout tree so elements that fit inside other elements will be children of them
@@ -263,7 +263,7 @@ class PDFQuery(object):
         if as_dict:
             results = dict(results)
         return results
-    
+
 
 
 
@@ -324,7 +324,7 @@ class PDFQuery(object):
 
 
     def _xmlize(self, node, root=None):
-        
+
         # collect attributes of current node
         tags = self._getattrs(node, 'y0', 'y1', 'x0', 'x1', 'width', 'height', 'bbox', 'linewidth', 'pts', 'index','name','matrix','word_margin' )
         if type(node) == LTImage:
@@ -333,7 +333,7 @@ class PDFQuery(object):
             tags.update( self._getattrs(node, 'fontname','adv','upright','size') )
         elif type(node) == LTPage:
             tags.update( self._getattrs(node, 'pageid','rotate') )
-          
+
         # create node
         branch = parser.makeelement(node.__class__.__name__, tags)
         branch.layout = node
@@ -344,7 +344,7 @@ class PDFQuery(object):
         # add text
         if hasattr(node, 'get_text'):
             branch.text = node.get_text()
-                
+
         # add children
         try:
             children = [self._xmlize(child, root) for child in node]
