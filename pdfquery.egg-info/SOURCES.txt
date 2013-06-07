@@ -3,7 +3,6 @@ LICENSE.txt
 MANIFEST.in
 README.rst
 setup.py
-examples/.DS_Store
 examples/sample.pdf
 pdfquery/__init__.py
 pdfquery/pdfquery.py

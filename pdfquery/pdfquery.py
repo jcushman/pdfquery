@@ -20,7 +20,6 @@ def _xpath_in_bbox(self, xpath, expr):
     xpath.add_post_condition("@x1 <= %s" % x1)
     xpath.add_post_condition("@y1 <= %s" % y1)
     return xpath
-cssselect.Function._xpath_in_bbox = _xpath_in_bbox
 
 def _xpath_overlaps_bbox(self, xpath, expr):
     x0,y0,x1,y1 = map(float, expr.split(","))
@@ -30,7 +29,12 @@ def _xpath_overlaps_bbox(self, xpath, expr):
     xpath.add_post_condition("@x1 >= %s" % x0)
     xpath.add_post_condition("@y1 >= %s" % y0)
     return xpath
-cssselect.Function._xpath_in_bbox = _xpath_in_bbox
+
+try:
+    cssselect.Function._xpath_in_bbox = _xpath_in_bbox
+    cssselect.Function._xpath_in_bbox = _xpath_in_bbox
+except AttributeError:
+    pass
 
 
 # Re-sort the PDFMiner Layout tree so elements that fit inside other elements will be children of them
