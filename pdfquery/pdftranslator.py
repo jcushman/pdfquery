@@ -11,17 +11,17 @@ class PDFQueryTranslator(cssselect_xpath.GenericTranslator):
     def xpath_in_bbox_function(self, xpath, fn):
         x0,y0,x1,y1 = map(float, fn.arguments[0].value.split(","))
         # TODO: seems to be doing < rather than <= ???
-        xpath.add_post_condition("@x0 >= %s" % x0)
-        xpath.add_post_condition("@y0 >= %s" % y0)
-        xpath.add_post_condition("@x1 <= %s" % x1)
-        xpath.add_post_condition("@y1 <= %s" % y1)
+        xpath.add_condition("@x0 >= %s" % x0)
+        xpath.add_condition("@y0 >= %s" % y0)
+        xpath.add_condition("@x1 <= %s" % x1)
+        xpath.add_condition("@y1 <= %s" % y1)
         return xpath
 
     def xpath_overlaps_bbox_function(self, xpath, fn):
         x0,y0,x1,y1 = map(float, fn.arguments[0].value.split(","))
         # TODO: seems to be doing < rather than <= ???
-        xpath.add_post_condition("@x0 <= %s" % x1)
-        xpath.add_post_condition("@y0 <= %s" % y1)
-        xpath.add_post_condition("@x1 >= %s" % x0)
-        xpath.add_post_condition("@y1 >= %s" % y0)
+        xpath.add_condition("@x0 <= %s" % x1)
+        xpath.add_condition("@y0 <= %s" % y1)
+        xpath.add_condition("@x1 >= %s" % x0)
+        xpath.add_condition("@y1 >= %s" % y0)
         return xpath
