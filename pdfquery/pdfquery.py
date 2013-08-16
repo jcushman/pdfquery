@@ -8,34 +8,9 @@ from pdfminer.converter import PDFPageAggregator
 from pdfminer.pdftypes import resolve1
 
 from pyquery import PyQuery
-from lxml import cssselect, etree
-
-# custom selectors monkey-patch
-
-def _xpath_in_bbox(self, xpath, expr):
-    x0,y0,x1,y1 = map(float, expr.split(","))
-    # TODO: seems to be doing < rather than <= ???
-    xpath.add_post_condition("@x0 >= %s" % x0)
-    xpath.add_post_condition("@y0 >= %s" % y0)
-    xpath.add_post_condition("@x1 <= %s" % x1)
-    xpath.add_post_condition("@y1 <= %s" % y1)
-    return xpath
-
-def _xpath_overlaps_bbox(self, xpath, expr):
-    x0,y0,x1,y1 = map(float, expr.split(","))
-    # TODO: seems to be doing < rather than <= ???
-    xpath.add_post_condition("@x0 <= %s" % x1)
-    xpath.add_post_condition("@y0 <= %s" % y1)
-    xpath.add_post_condition("@x1 >= %s" % x0)
-    xpath.add_post_condition("@y1 >= %s" % y0)
-    return xpath
-
-try:
-    cssselect.Function._xpath_in_bbox = _xpath_in_bbox
-    cssselect.Function._xpath_in_bbox = _xpath_in_bbox
-except AttributeError:
-    pass
-
+from lxml import etree
+import cssselect
+from pdftranslator import PDFQueryTranslator
 
 # Re-sort the PDFMiner Layout tree so elements that fit inside other elements will be children of them
 
@@ -286,7 +261,7 @@ class PDFQuery(object):
                 tree = self.get_tree(page_numbers)
         if hasattr(tree, 'getroot'):
             tree = tree.getroot()
-        return PyQuery(tree)
+        return PyQuery(tree, css_translator=PDFQueryTranslator())
 
     def get_tree(self, *page_numbers):
         """
