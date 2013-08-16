@@ -210,11 +210,11 @@ class PDFQuery(object):
         """
         if self.tree is None or self.pq is None:
             self.load()
-        pq = PyQuery(tree) if tree is not None else self.pq
+        pq = PyQuery(tree, css_translator=PDFQueryTranslator()) if tree is not None else self.pq
         if tree is None:
             pq = self.pq
         else:
-            pq = PyQuery(tree)
+            pq = PyQuery(tree, css_translator=PDFQueryTranslator())
         results = []
         formatter = None
         parent = pq
