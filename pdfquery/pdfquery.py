@@ -11,7 +11,7 @@ from pyquery import PyQuery
 from lxml import etree
 import cssselect
 from pdftranslator import PDFQueryTranslator
-from cache import DummyCache, TempCache
+from cache import DummyCache, FileCache
 import hashlib
 
 # Re-sort the PDFMiner Layout tree so elements that fit inside other elements will be children of them
@@ -138,7 +138,7 @@ class PDFQuery(object):
                     input_text_formatter=None,
                     normalize_spaces=True,
                     resort=True,
-                    use_cache=True,
+                    parse_tree_cacher=FileCache("/tmp/"),
                     ):
         # store input
         self.merge_tags = merge_tags
@@ -172,18 +172,11 @@ class PDFQuery(object):
         self.pq = None
         self.file = file
 
-        if use_cache:
-            filehasher = hashlib.md5()
-            while True:
-                data = file.read(8192)
-                if not data: break
-                filehasher.update(data)
-            file.seek(0)
-            self._filehash = filehasher.hexdigest()
-
-            self._cache = TempCache(self._filehash) #use hash as base for cache
+        if parse_tree_cacher:
+            self._parse_tree_cacher = parse_tree_cacher
+            self._parse_tree_cacher.set_hash_key(self.file)
         else:
-            self._cache = DummyCache()
+            self._parse_tree_cacher = DummyCache()
 
         # set up layout parsing
         rsrcmgr = PDFResourceManager()
@@ -283,9 +276,9 @@ class PDFQuery(object):
         """
             Return lxml.etree.ElementTree for entire document, or page numbers given if any.
         """
-        cacheKey = "_".join(map(str, _flatten(page_numbers)))
-        tree = self._cache.get(cacheKey)
-        if not tree:
+        cache_key = "_".join(map(str, _flatten(page_numbers)))
+        tree = self._parse_tree_cacher.get(cache_key)
+        if tree is None:
             # set up root
             root = parser.makeelement("pdfxml")
             if self.doc.info:                           #not all PDFs seem to have this info section
@@ -304,7 +297,7 @@ class PDFQuery(object):
             self._clean_text(root)
             # wrap root in ElementTree
             tree = etree.ElementTree(root)
-            self._cache.set(cacheKey, tree)
+            self._parse_tree_cacher.set(cache_key, tree)
         return tree
 
     def _clean_text(self, branch):
