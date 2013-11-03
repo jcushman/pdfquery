@@ -6,6 +6,7 @@ setup.py
 examples/sample.pdf
 pdfquery/__init__.py
 pdfquery/pdfquery.py
+pdfquery/pdftranslator.py
 pdfquery.egg-info/PKG-INFO
 pdfquery.egg-info/SOURCES.txt
 pdfquery.egg-info/dependency_links.txt

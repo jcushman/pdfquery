@@ -8,34 +8,11 @@ from pdfminer.converter import PDFPageAggregator
 from pdfminer.pdftypes import resolve1
 
 from pyquery import PyQuery
-from lxml import cssselect, etree
-
-# custom selectors monkey-patch
-
-def _xpath_in_bbox(self, xpath, expr):
-    x0,y0,x1,y1 = map(float, expr.split(","))
-    # TODO: seems to be doing < rather than <= ???
-    xpath.add_post_condition("@x0 >= %s" % x0)
-    xpath.add_post_condition("@y0 >= %s" % y0)
-    xpath.add_post_condition("@x1 <= %s" % x1)
-    xpath.add_post_condition("@y1 <= %s" % y1)
-    return xpath
-
-def _xpath_overlaps_bbox(self, xpath, expr):
-    x0,y0,x1,y1 = map(float, expr.split(","))
-    # TODO: seems to be doing < rather than <= ???
-    xpath.add_post_condition("@x0 <= %s" % x1)
-    xpath.add_post_condition("@y0 <= %s" % y1)
-    xpath.add_post_condition("@x1 >= %s" % x0)
-    xpath.add_post_condition("@y1 >= %s" % y0)
-    return xpath
-
-try:
-    cssselect.Function._xpath_in_bbox = _xpath_in_bbox
-    cssselect.Function._xpath_in_bbox = _xpath_in_bbox
-except AttributeError:
-    pass
-
+from lxml import etree
+import cssselect
+from pdftranslator import PDFQueryTranslator
+from cache import DummyCache, TempCache
+import hashlib
 
 # Re-sort the PDFMiner Layout tree so elements that fit inside other elements will be children of them
 
@@ -161,6 +138,7 @@ class PDFQuery(object):
                     input_text_formatter=None,
                     normalize_spaces=True,
                     resort=True,
+                    use_cache=True,
                     ):
         # store input
         self.merge_tags = merge_tags
@@ -193,6 +171,19 @@ class PDFQuery(object):
         self.tree = None
         self.pq = None
         self.file = file
+
+        if use_cache:
+            filehasher = hashlib.md5()
+            while True:
+                data = file.read(8192)
+                if not data: break
+                filehasher.update(data)
+            file.seek(0)
+            self._filehash = filehasher.hexdigest()
+
+            self._cache = TempCache(self._filehash) #use hash as base for cache
+        else:
+            self._cache = DummyCache()
 
         # set up layout parsing
         rsrcmgr = PDFResourceManager()
@@ -235,11 +226,11 @@ class PDFQuery(object):
         """
         if self.tree is None or self.pq is None:
             self.load()
-        pq = PyQuery(tree) if tree is not None else self.pq
+        pq = PyQuery(tree, css_translator=PDFQueryTranslator()) if tree is not None else self.pq
         if tree is None:
             pq = self.pq
         else:
-            pq = PyQuery(tree)
+            pq = PyQuery(tree, css_translator=PDFQueryTranslator())
         results = []
         formatter = None
         parent = pq
@@ -286,30 +277,35 @@ class PDFQuery(object):
                 tree = self.get_tree(page_numbers)
         if hasattr(tree, 'getroot'):
             tree = tree.getroot()
-        return PyQuery(tree)
+        return PyQuery(tree, css_translator=PDFQueryTranslator())
 
     def get_tree(self, *page_numbers):
         """
             Return lxml.etree.ElementTree for entire document, or page numbers given if any.
         """
-        # set up root
-        root = parser.makeelement("pdfxml")
-        if self.doc.info:                           #not all PDFs seem to have this info section
-            for k, v in self.doc.info[0].items():
-                root.set(k, unicode(v))
-        # add pages
-        if page_numbers:
-            pages = [[n, self.get_layout(self.get_page(n))] for n in _flatten(page_numbers)]
-        else:
-            pages = enumerate(self.get_layouts())
-        for n, page in pages:
-            page = self._xmlize(page)
-            page.set('page_index', unicode(n))
-            page.set('page_label', self.doc.get_page_number(n))
-            root.append(page)
-        self._clean_text(root)
-        # wrap root in ElementTree
-        return etree.ElementTree(root)
+        cacheKey = "_".join(map(str, _flatten(page_numbers)))
+        tree = self._cache.get(cacheKey)
+        if not tree:
+            # set up root
+            root = parser.makeelement("pdfxml")
+            if self.doc.info:                           #not all PDFs seem to have this info section
+                for k, v in self.doc.info[0].items():
+                    root.set(k, unicode(v))
+            # add pages
+            if page_numbers:
+                pages = [[n, self.get_layout(self.get_page(n))] for n in _flatten(page_numbers)]
+            else:
+                pages = enumerate(self.get_layouts())
+            for n, page in pages:
+                page = self._xmlize(page)
+                page.set('page_index', unicode(n))
+                page.set('page_label', self.doc.get_page_number(n))
+                root.append(page)
+            self._clean_text(root)
+            # wrap root in ElementTree
+            tree = etree.ElementTree(root)
+            self._cache.set(cacheKey, tree)
+        return tree
 
     def _clean_text(self, branch):
         """
