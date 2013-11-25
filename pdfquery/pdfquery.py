@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 import re
 
-from pdfminer.pdfparser import PDFParser, PDFDocument
+from pdfminer.pdfparser import PDFParser 
+
+try:
+    from pdfminer.pdfparser import PDFDocument
+except ImportError:
+    from pdfminer.pdfdocument import PDFDocument
+    
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.layout import LAParams, LTChar, LTImage, LTPage #LTTextBox, LTTextLine, LTFigure, 
 from pdfminer.converter import PDFPageAggregator
