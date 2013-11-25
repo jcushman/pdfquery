@@ -1,5 +1,5 @@
 cssselect>=0.7.1
 lxml>=3.0
-pdfminer>=20110515
+pdfminer>=20131113
 pyquery>=1.2.2
 roman>=1.4.0
