@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pdfquery',
-    version='0.2',
+    version='0.2.1',
     author=u'Jack Cushman',
     author_email='jcushman@gmail.com',
     packages=find_packages(),
@@ -14,7 +14,7 @@ setup(
     long_description=open('README.rst').read(),
     install_requires = open('requirements.txt').read(),
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Topic :: Text Processing",
         "Topic :: Utilities",
         "License :: OSI Approved :: MIT License",

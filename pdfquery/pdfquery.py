@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 import re
 
-from pdfminer.pdfparser import PDFParser 
+from pdfminer.pdfparser import PDFParser
 
 try:
-    from pdfminer.pdfparser import PDFDocument
+    # pdfminer < 20131022
+    from pdfminer.pdfparser import PDFDocument, PDFPage
 except ImportError:
+    # pdfminer >= 20131022
     from pdfminer.pdfdocument import PDFDocument
-    
+    from pdfminer.pdfpage import PDFPage
+
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
-from pdfminer.layout import LAParams, LTChar, LTImage, LTPage #LTTextBox, LTTextLine, LTFigure, 
+from pdfminer.layout import LAParams, LTChar, LTImage, LTPage
 from pdfminer.converter import PDFPageAggregator
 from pdfminer.pdftypes import resolve1
 
@@ -18,7 +21,6 @@ from lxml import etree
 import cssselect
 from pdftranslator import PDFQueryTranslator
 from cache import DummyCache, FileCache
-import hashlib
 
 # Re-sort the PDFMiner Layout tree so elements that fit inside other elements will be children of them
 
@@ -38,10 +40,14 @@ def _box_in_box(el, child):
     """ Return True if child is contained within el. """
     return float(el.get('x0')) <= float(child.get('x0')) and float(el.get('x1')) >= float(child.get('x1')) and float(el.get('y0')) <= float(child.get('y0')) and float(el.get('y1')) >= float(child.get('y1'))
 
+_comp_bbox_keys_required = {'x0', 'x1', 'y0', 'y1'}
+
 def _comp_bbox(el, el2):
     """ Return 1 if el in el2, -1 if el2 in el, else 0"""
-    if _box_in_box(el2, el): return 1
-    if _box_in_box(el, el2): return -1
+    # only compare if both elements have x/y coordinates
+    if _comp_bbox_keys_required <= set(el.keys()) and _comp_bbox_keys_required <= set(el2.keys()):
+        if _box_in_box(el2, el): return 1
+        if _box_in_box(el, el2): return -1
     return 0
 
 # random helpers
@@ -138,7 +144,7 @@ parser.set_element_class_lookup(parser_lookup)
 
 class PDFQuery(object):
     def __init__(self, file,
-                    merge_tags=('LTChar', 'LTAnon'),
+                    merge_tags=('LTChar', 'LTAnno'),
                     round_floats=True,
                     round_digits=3,
                     input_text_formatter=None,
@@ -159,7 +165,7 @@ class PDFQuery(object):
             r = re.compile(r'\s+')
             self.input_text_formatter = lambda s: re.sub(r, ' ', s)
         else:
-            self.input_text_formatter = False
+            self.input_text_formatter = None
 
         # open doc
         if not hasattr(file, 'read'):
@@ -167,10 +173,17 @@ class PDFQuery(object):
                 file = open(file, 'rb')
             except TypeError:
                 raise TypeError("File must be file object or filepath string.")
+
         parser = PDFParser(file)
-        doc = QPDFDocument()
-        parser.set_document(doc)
-        doc.set_parser(parser)
+        if hasattr(QPDFDocument, 'set_parser'):
+            # pdfminer < 20131022
+            doc = QPDFDocument()
+            parser.set_document(doc)
+            doc.set_parser(parser)
+        else:
+            # pdfminer >= 20131022
+            doc = QPDFDocument(parser)
+            parser.set_document(doc)
         doc.initialize()
         self.doc = doc
         self.parser = parser
@@ -323,7 +336,7 @@ class PDFQuery(object):
 
 
     def _xmlize(self, node, root=None):
-        
+
         # collect attributes of current node
         tags = self._getattrs(node, 'y0', 'y1', 'x0', 'x1', 'width', 'height', 'bbox', 'linewidth', 'pts', 'index','name','matrix','word_margin' )
         if type(node) == LTImage:
@@ -344,11 +357,11 @@ class PDFQuery(object):
         if hasattr(node, 'get_text'):
             branch.text = node.get_text()
                 
-        # add children
-        try:
-            children = [self._xmlize(child, root) for child in node]
+        # add children if node is an iterable
+        if hasattr(node, '__iter__'):
             last = None
-            for child in children:
+            for child in node:
+                child = self._xmlize(child, root)
                 if self.merge_tags and child.tag in self.merge_tags:
                     if branch.text and child.text in branch.text:
                         continue
@@ -362,8 +375,6 @@ class PDFQuery(object):
                 else:
                     branch.append(child)
                 last = child
-        except TypeError: # not an iterable node
-            pass
 
         return branch
 
@@ -405,7 +416,13 @@ class PDFQuery(object):
             so we won't know how many there are until we parse the whole document,
             which we don't want to do until we need to.
         """
-        self._pages_iter = self._pages_iter or self.doc.get_pages()
+        try:
+            # pdfminer < 20131022
+            self._pages_iter = self._pages_iter or self.doc.get_pages()
+        except AttributeError:
+            # pdfminer >= 20131022
+            self._pages_iter = self._pages_iter or PDFPage.create_pages(self.doc)
+
         if target_page >= 0:
             while len(self._pages) <= target_page:
                 next = self._pages_iter.next()

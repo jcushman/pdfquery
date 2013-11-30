@@ -24,10 +24,10 @@ underneath the words "Your first name and initial" in each PDF::
 
     >>> pdf = pdfquery.PDFQuery("tests/sample.pdf")
     >>> pdf.load()
-    >>> label = pdf.pq(':contains("Your first name and initial")')
+    >>> label = pdf.pq('LTTextLineHorizontal:contains("Your first name and initial")')
     >>> left_corner = float(label.attr('x0'))
     >>> bottom_corner = float(label.attr('y0'))
-    >>> name = pdf.pq(':in_bbox("%s, %s, %s, %s")' % (left_corner, bottom_corner-30, left_corner+150, bottom_corner)).text()
+    >>> name = pdf.pq('LTTextLineHorizontal:in_bbox("%s, %s, %s, %s")' % (left_corner, bottom_corner-30, left_corner+150, bottom_corner)).text()
     >>> name
     'John E.'
 
@@ -44,13 +44,13 @@ Now let's extract and format a bunch of data all at once::
          ('with_parent','LTPage[pageid=1]'),
          ('with_formatter', 'text'),
 
-         ('last_name', ':in_bbox("315,680,395,700")'),
-         ('spouse', ':in_bbox("170,650,220,680")'),
+         ('last_name', 'LTTextLineHorizontal:in_bbox("315,680,395,700")'),
+         ('spouse', 'LTTextLineHorizontal:in_bbox("170,650,220,680")'),
 
          ('with_parent','LTPage[pageid=2]'),
 
-         ('oath', ':contains("perjury")', lambda match: match.text()[:30]+"..."),
-         ('year', ':contains("Form 1040A (")', lambda match: int(match.text()[-5:-1]))
+         ('oath', 'LTTextLineHorizontal:contains("perjury")', lambda match: match.text()[:30]+"..."),
+         ('year', 'LTTextLineHorizontal:contains("Form 1040A (")', lambda match: int(match.text()[-5:-1]))
      ])
 
 Result::
