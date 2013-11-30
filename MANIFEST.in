@@ -1,2 +1,2 @@
 include *.txt *.rst
-include examples/*
+include tests/sample.pdf

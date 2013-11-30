@@ -12,7 +12,7 @@ setup(
     description='Concise and friendly PDF scraper using JQuery or XPath selectors.',
     keywords='',
     long_description=open('README.rst').read(),
-    install_requires = ['pdfminer', 'pyquery', 'lxml', 'roman'],
+    install_requires = open('requirements.txt').read(),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Text Processing",
