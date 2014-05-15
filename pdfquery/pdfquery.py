@@ -150,7 +150,7 @@ class PDFQuery(object):
                     input_text_formatter=None,
                     normalize_spaces=True,
                     resort=True,
-                    parse_tree_cacher=FileCache("/tmp/"),
+                    parse_tree_cacher=None,
                     ):
         # store input
         self.merge_tags = merge_tags
@@ -184,7 +184,9 @@ class PDFQuery(object):
             # pdfminer >= 20131022
             doc = QPDFDocument(parser)
             parser.set_document(doc)
-        doc.initialize()
+        if hasattr(doc, 'initialize'):
+            # as of pdfminer==20140328, "PDFDocument.initialize() method is removed and no longer needed."
+            doc.initialize()
         self.doc = doc
         self.parser = parser
         self.tree = None

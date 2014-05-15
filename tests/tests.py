@@ -10,7 +10,7 @@ class TestPDFQuery(unittest.TestCase):
 
     def setUp(self):
         self.pdf = pdfquery.PDFQuery("tests/sample.pdf",
-                                     parse_tree_cacher=FileCache("/tmp/") if sys.argv[1]=='cache' else DummyCache(),
+                                     parse_tree_cacher=FileCache("/tmp/") if sys.argv[1]=='cache' else None,
                                      )
         self.pdf.load()
 
