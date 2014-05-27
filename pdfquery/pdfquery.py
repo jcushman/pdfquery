@@ -84,7 +84,7 @@ def smart_unicode_decode(encoded_string):
         Example input from bug #11: '\xfe\xff\x00I\x00n\x00s\x00p\x00e\x00c\x00t\x00i\x00o\x00n\x00 \x00R\x00e\x00p\x00o\x00r\x00t\x00 \x00v\x002\x00.\x002'
     """
     detected_encoding = chardet.detect(encoded_string)
-    decoded_string = unicode(encoded_string, encoding=detected_encoding['encoding'], errors='replace')
+    decoded_string = unicode(encoded_string, encoding=detected_encoding['encoding'] or 'utf8', errors='replace')
 
     # unicode string may still have useless BOM character at the beginning
     if decoded_string[0] in bom_headers:
