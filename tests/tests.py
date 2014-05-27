@@ -1,3 +1,4 @@
+import StringIO
 import sys
 import pdfquery
 import unittest
@@ -13,6 +14,16 @@ class TestPDFQuery(unittest.TestCase):
                                      parse_tree_cacher=FileCache("/tmp/") if sys.argv[1]=='cache' else None,
                                      )
         self.pdf.load()
+
+    def test_xml_conversion(self):
+        """
+            Test that converted XML hasn't changed from saved version.
+        """
+        tree_string = StringIO.StringIO()
+        self.pdf.tree.write(tree_string, pretty_print=True, encoding="utf-8")
+        with open("tests/sample_output.xml", 'rb') as f:
+            saved_string = f.read()
+        self.assertEqual(tree_string.getvalue(), saved_string, "XML conversion of sample.pdf has changed!")
 
     def test_selectors(self):
         """

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+import codecs
 import re
+import chardet
 
 from pdfminer.pdfparser import PDFParser
 
@@ -67,6 +69,28 @@ def _flatten(l, ltypes=(list, tuple)):
                 l[i:i + 1] = l[i]
         i += 1
     return ltype(l)
+
+# these might be tacked onto the start of a decoded string after conversion
+bom_headers = {
+    unicode(codecs.BOM_UTF8,'utf8'),
+    unicode(codecs.BOM_UTF16_LE, 'utf-16LE'),
+    unicode(codecs.BOM_UTF16_BE, 'utf-16BE'),
+    unicode(codecs.BOM_UTF32_LE, 'utf-32LE'),
+    unicode(codecs.BOM_UTF32_BE, 'utf-32BE')
+}
+def smart_unicode_decode(encoded_string):
+    """
+        Given an encoded string of unknown format, detect the format with chardet and return the unicode version.
+        Example input from bug #11: '\xfe\xff\x00I\x00n\x00s\x00p\x00e\x00c\x00t\x00i\x00o\x00n\x00 \x00R\x00e\x00p\x00o\x00r\x00t\x00 \x00v\x002\x00.\x002'
+    """
+    detected_encoding = chardet.detect(encoded_string)
+    decoded_string = unicode(encoded_string, encoding=detected_encoding['encoding'], errors='replace')
+
+    # unicode string may still have useless BOM character at the beginning
+    if decoded_string[0] in bom_headers:
+        decoded_string = decoded_string[1:]
+
+    return decoded_string
 
 # custom PDFDocument class
 class QPDFDocument(PDFDocument):
@@ -304,7 +328,7 @@ class PDFQuery(object):
             root = parser.makeelement("pdfxml")
             if self.doc.info:                           #not all PDFs seem to have this info section
                 for k, v in self.doc.info[0].items():
-                    root.set(k, unicode(v))
+                    root.set(k, smart_unicode_decode(v))
             # add pages
             if page_numbers:
                 pages = [[n, self.get_layout(self.get_page(n))] for n in _flatten(page_numbers)]
