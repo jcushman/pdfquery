@@ -83,6 +83,9 @@ def smart_unicode_decode(encoded_string):
         Given an encoded string of unknown format, detect the format with chardet and return the unicode version.
         Example input from bug #11: '\xfe\xff\x00I\x00n\x00s\x00p\x00e\x00c\x00t\x00i\x00o\x00n\x00 \x00R\x00e\x00p\x00o\x00r\x00t\x00 \x00v\x002\x00.\x002'
     """
+    if not encoded_string:
+        return u''
+
     detected_encoding = chardet.detect(encoded_string)
     decoded_string = unicode(encoded_string, encoding=detected_encoding['encoding'] or 'utf8', errors='replace')
 

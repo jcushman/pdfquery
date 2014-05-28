@@ -65,6 +65,15 @@ class TestPDFQuery(unittest.TestCase):
             'year': 2007
         })
 
+class TestUnicode(unittest.TestCase):
+
+    def setUp(self):
+        self.pdf = pdfquery.PDFQuery("tests/unicode_docinfo.pdf")
+        self.pdf.load()
+
+    def test_docinfo(self):
+        docinfo = self.pdf.tree.getroot()
+        self.assertEqual(docinfo.attrib['Title'], u'\u262d\U0001f61c\U0001f4a9Unicode is fun!')
 
 if __name__ == '__main__':
     unittest.main()
