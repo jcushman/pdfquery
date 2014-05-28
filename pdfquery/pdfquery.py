@@ -90,7 +90,7 @@ def smart_unicode_decode(encoded_string):
     decoded_string = unicode(encoded_string, encoding=detected_encoding['encoding'] or 'utf8', errors='replace')
 
     # unicode string may still have useless BOM character at the beginning
-    if decoded_string[0] in bom_headers:
+    if decoded_string and decoded_string[0] in bom_headers:
         decoded_string = decoded_string[1:]
 
     return decoded_string
