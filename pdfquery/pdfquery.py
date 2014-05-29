@@ -100,55 +100,82 @@ class QPDFDocument(PDFDocument):
     def get_page_number(self, index):
         """
         Given an index, return page label as specified by catalog['PageLabels']['Nums']
-        Nums == [   0 << /S /r >>
-                    4 << /S /D >>
-                    7 << /S /D /P (A−) /St 8>>
-                ]
-                    /S = [
-                            D Decimal arabic numerals
-                            R Uppercase roman numerals
-                            r Lowercase roman numerals
-                            A Uppercase letters (A to Z for the first 26 pages, AA to ZZ for the next 26, and so on)
-                            a Lowercase letters (a to z for the first 26 pages, aa to zz for the next 26, and so on)
-                        ] (if no /S, just use prefix ...)
-                    /P = text string label
-                    /St = integer start value
+
+        In a PDF, page labels are stored as a list of pairs, like
+        [starting_index, label_format, starting_index, label_format ...]
+
+        For example:
+        [0, {'S': 'D', 'St': 151}, 4, {'S':'R', 'P':'Foo'}]
+
+        So we have to first find the correct label_format based on the closest starting_index lower than the
+        requested index, then use the label_format to convert the index to a page label.
+
+        Label format meaning:
+            /S = [
+                    D Decimal arabic numerals
+                    R Uppercase roman numerals
+                    r Lowercase roman numerals
+                    A Uppercase letters (A to Z for the first 26 pages, AA to ZZ for the next 26, and so on)
+                    a Lowercase letters (a to z for the first 26 pages, aa to zz for the next 26, and so on)
+                ] (if no /S, just use prefix ...)
+            /P = text string label
+            /St = integer start value
         """
+
+        # get page ranges
         try:
-            nums = resolve1(self.catalog['PageLabels'])['Nums'] # e.g. [ 0 {settings} 2 {settings} 20
-            # {settings} ...]
-            assert len(nums) > 1 and len(nums) % 2 == 0
+            page_ranges = resolve1(self.catalog['PageLabels'])['Nums']
+            assert len(page_ranges) > 1 and len(page_ranges) % 2 == 0
         except:
             return ""
-        for i in range(len(nums)-2,-1,-2): # find highest page number lower than requested page
-            if nums[i] <= index:
-                break
-        settings = nums[i+1].resolve()
-        page_num = ""
-        if 'S' in settings: # show a digit
-            page_num = index - nums[i]
-            if 'St' in settings: # alternate start value
-                page_num += settings['St']
+
+        # find page range containing index
+        page_range_pairs = reversed( zip(page_ranges[::2], page_ranges[1::2]) )
+        for starting_index, label_format in page_range_pairs:
+            if starting_index <= index:
+                break # we found correct label_format
+        label_format = resolve1(label_format)
+
+        page_label = ""
+
+        # handle numeric part of label
+        if 'S' in label_format:
+
+            # first find number for this page ...
+            page_label = index - starting_index
+            if 'St' in label_format: # alternate start value
+                page_label += label_format['St']
             else:
-                page_num += 1
-            num_type = settings['S'].name
-            if num_type.lower() == 'r': # roman (upper or lower)
+                page_label += 1
+
+            # ... then convert to correct format
+            num_type = label_format['S'].name
+
+            # roman (upper or lower)
+            if num_type.lower() == 'r':
                 import roman
-                page_num = roman.toRoman(page_num)
+                page_label = roman.toRoman(page_label)
                 if num_type == 'r':
-                    page_num = page_num.lower()
-            elif num_type.lower() == 'a': # letters
+                    page_label = page_label.lower()
+
+            # letters
+            elif num_type.lower() == 'a':
                 # a to z for the first 26 pages, aa to zz for the next 26, and so on
-                letter = chr(page_num % 26 + 65)
-                letter *= page_num / 26 + 1
+                letter = chr(page_label % 26 + 65)
+                letter *= page_label / 26 + 1
                 if num_type == 'a':
                     letter = letter.lower()
-                page_num = letter
-            else: #if num_type == 'D': # decimal arabic
-                page_num = unicode(page_num)
-        if 'P' in settings: # page prefix
-            page_num = settings['P']+page_num
-        return page_num
+                page_label = letter
+
+            # decimal arabic
+            else: #if num_type == 'D':
+                page_label = unicode(page_label)
+
+        # handle string prefix
+        if 'P' in label_format:
+            page_label = label_format['P']+page_label
+
+        return page_label
 
 
 # create etree parser using custom Element class

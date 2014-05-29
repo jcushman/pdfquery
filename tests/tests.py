@@ -65,6 +65,9 @@ class TestPDFQuery(unittest.TestCase):
             'year': 2007
         })
 
+    def test_page_numbers(self):
+        self.assertEqual(self.pdf.tree.getroot()[0].get('page_label'), '1')
+
 class TestUnicode(unittest.TestCase):
 
     def setUp(self):
