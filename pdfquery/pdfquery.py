@@ -122,16 +122,20 @@ class QPDFDocument(PDFDocument):
             /St = integer start value
         """
 
-        # get page ranges
-        try:
-            page_ranges = resolve1(self.catalog['PageLabels'])['Nums']
-            assert len(page_ranges) > 1 and len(page_ranges) % 2 == 0
-        except:
+        # get and cache page ranges
+        if not hasattr(self, 'page_range_pairs'):
+            try:
+                page_ranges = resolve1(self.catalog['PageLabels'])['Nums']
+                assert len(page_ranges) > 1 and len(page_ranges) % 2 == 0
+                self.page_range_pairs = list(reversed(zip(page_ranges[::2], page_ranges[1::2])))
+            except:
+                self.page_range_pairs = []
+
+        if not self.page_range_pairs:
             return ""
 
         # find page range containing index
-        page_range_pairs = reversed( zip(page_ranges[::2], page_ranges[1::2]) )
-        for starting_index, label_format in page_range_pairs:
+        for starting_index, label_format in self.page_range_pairs:
             if starting_index <= index:
                 break # we found correct label_format
         label_format = resolve1(label_format)
