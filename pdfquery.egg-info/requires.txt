@@ -1,4 +1,5 @@
 cssselect>=0.7.1
+chardet
 lxml>=3.0
 pdfminer>=20110515
 pyquery>=1.2.2

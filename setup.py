@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pdfquery',
-    version='0.2.3',
+    version='0.2.4',
     author=u'Jack Cushman',
     author_email='jcushman@gmail.com',
     packages=find_packages(),

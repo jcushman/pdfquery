@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: pdfquery
-Version: 0.2.3
+Version: 0.2.4
 Summary: Concise and friendly PDF scraper using JQuery or XPath selectors.
 Home-page: https://github.com/jcushman/pdfquery
 Author: Jack Cushman

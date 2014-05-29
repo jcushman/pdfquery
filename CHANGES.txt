@@ -1,3 +1,4 @@
+v0.2.4, 2014-05-29 -- Fix unicode and page number bugs.
 v0.2.3, 2014-05-15 -- Fix compatibility with new pdfminer.
 v0.2.2, 2013-12-04 -- Disable cache by default.
 v0.2.1, 2013-11-30 -- Fix compatibility with new pdfminer.
