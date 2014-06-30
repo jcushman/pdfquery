@@ -42,7 +42,7 @@ def _box_in_box(el, child):
     """ Return True if child is contained within el. """
     return float(el.get('x0')) <= float(child.get('x0')) and float(el.get('x1')) >= float(child.get('x1')) and float(el.get('y0')) <= float(child.get('y0')) and float(el.get('y1')) >= float(child.get('y1'))
 
-_comp_bbox_keys_required = {'x0', 'x1', 'y0', 'y1'}
+_comp_bbox_keys_required = set(['x0', 'x1', 'y0', 'y1'])
 
 def _comp_bbox(el, el2):
     """ Return 1 if el in el2, -1 if el2 in el, else 0"""
@@ -71,13 +71,13 @@ def _flatten(l, ltypes=(list, tuple)):
     return ltype(l)
 
 # these might be tacked onto the start of a decoded string after conversion
-bom_headers = {
+bom_headers = set([
     unicode(codecs.BOM_UTF8,'utf8'),
     unicode(codecs.BOM_UTF16_LE, 'utf-16LE'),
     unicode(codecs.BOM_UTF16_BE, 'utf-16BE'),
     unicode(codecs.BOM_UTF32_LE, 'utf-32LE'),
     unicode(codecs.BOM_UTF32_BE, 'utf-32BE')
-}
+])
 def smart_unicode_decode(encoded_string):
     """
         Given an encoded string of unknown format, detect the format with chardet and return the unicode version.
@@ -360,9 +360,20 @@ class PDFQuery(object):
         if tree is None:
             # set up root
             root = parser.makeelement("pdfxml")
-            if self.doc.info:                           #not all PDFs seem to have this info section
+            if self.doc.info:
                 for k, v in self.doc.info[0].items():
-                    root.set(k, smart_unicode_decode(v))
+                    v = resolve1(v)
+                    if type(v) == list:
+                        v = unicode([smart_unicode_decode(item) for item in v])
+                    else:
+                        v = smart_unicode_decode(v)
+                    try:
+                        root.set(k, v)
+                    except ValueError as e:
+                        if "Invalid attribute name" in e.message:
+                            k = re.sub('\W','_',k)
+                            root.set(k, v)
+
             # add pages
             if page_numbers:
                 pages = [[n, self.get_layout(self.get_page(n))] for n in _flatten(page_numbers)]
@@ -374,9 +385,11 @@ class PDFQuery(object):
                 page.set('page_label', self.doc.get_page_number(n))
                 root.append(page)
             self._clean_text(root)
+
             # wrap root in ElementTree
             tree = etree.ElementTree(root)
             self._parse_tree_cacher.set(cache_key, tree)
+
         return tree
 
     def _clean_text(self, branch):

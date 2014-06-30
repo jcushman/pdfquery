@@ -1,13 +1,16 @@
+# to run:
+# pip install unittest2
+# unit2 discovery
+
 import StringIO
 import sys
 import pdfquery
-import unittest
+import unittest2
 
-# to run: python -m unittest tests
 from pdfquery.cache import FileCache, DummyCache
 
 
-class TestPDFQuery(unittest.TestCase):
+class TestPDFQuery(unittest2.TestCase):
 
     def setUp(self):
         self.pdf = pdfquery.PDFQuery("tests/sample.pdf",
@@ -19,11 +22,22 @@ class TestPDFQuery(unittest.TestCase):
         """
             Test that converted XML hasn't changed from saved version.
         """
+        # get current XML for sample file
         tree_string = StringIO.StringIO()
         self.pdf.tree.write(tree_string, pretty_print=True, encoding="utf-8")
-        with open("tests/sample_output.xml", 'rb') as f:
+        tree_string = tree_string.getvalue()
+
+        # get previous XML
+        # this varies by Python version, because the float handling isn't quite the same
+        comparison_file = "tests/sample_output_python_2.6.xml" if sys.version_info[0] == 2 and sys.version_info[1] < 7 else "tests/sample_output.xml"
+        with open(comparison_file, 'rb') as f:
             saved_string = f.read()
-        self.assertEqual(tree_string.getvalue(), saved_string, "XML conversion of sample.pdf has changed!")
+
+        # compare current to previous
+        if tree_string != saved_string:
+            with open("tests/failed_output.xml", "wb") as out:
+                out.write(tree_string)
+            self.fail("XML conversion of sample.pdf has changed! Compare tests/sample_output.xml to tests/failed_output.xml.")
 
     def test_selectors(self):
         """
@@ -68,7 +82,7 @@ class TestPDFQuery(unittest.TestCase):
     def test_page_numbers(self):
         self.assertEqual(self.pdf.tree.getroot()[0].get('page_label'), '1')
 
-class TestUnicode(unittest.TestCase):
+class TestUnicode(unittest2.TestCase):
 
     def setUp(self):
         self.pdf = pdfquery.PDFQuery("tests/unicode_docinfo.pdf")
@@ -79,4 +93,4 @@ class TestUnicode(unittest.TestCase):
         self.assertEqual(docinfo.attrib['Title'], u'\u262d\U0001f61c\U0001f4a9Unicode is fun!')
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest2.main()
