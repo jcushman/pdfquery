@@ -22,7 +22,7 @@ The basic idea is to transform a PDF document into an element tree so we can fin
 using pyquery. Suppose we're trying to extract a name from a set of PDFs, but all we know is that it appears
 underneath the words "Your first name and initial" in each PDF::
 
-    >>> pdf = pdfquery.PDFQuery("tests/sample.pdf")
+    >>> pdf = pdfquery.PDFQuery("tests/samples/IRS_1040A.pdf")
     >>> pdf.load()
     >>> label = pdf.pq('LTTextLineHorizontal:contains("Your first name and initial")')
     >>> left_corner = float(label.attr('x0'))
@@ -40,7 +40,7 @@ See the Caching section to avoid this on subsequent runs.
 
 Now let's extract and format a bunch of data all at once::
 
-    >>> pdf = pdfquery.PDFQuery("tests/sample.pdf")
+    >>> pdf = pdfquery.PDFQuery("tests/samples/IRS_1040A.pdf")
     >>> pdf.extract( [
          ('with_parent','LTPage[pageid=1]'),
          ('with_formatter', 'text'),
@@ -75,7 +75,7 @@ interfaces to get at the data you want.
 First pdfminer opens the document and reads its layout.
 You can access the pdfminer document at ``pdf.doc``::
 
-    >>> pdf = pdfquery.PDFQuery("tests/sample.pdf")
+    >>> pdf = pdfquery.PDFQuery("tests/samples/IRS_1040A.pdf")
     >>> pdf.doc
     <pdfminer.pdfparser.PDFDocument object at 0xd95c90>
     >>> pdf.doc.catalog # fetch attribute of underlying pdfminer document
@@ -158,7 +158,7 @@ PDFQuery accepts an optional caching argument that will store the results of PDF
 so subsequent runs on the same file will be much quicker. For example:
 
     from pdfquery.cache import FileCache
-    pdfquery.PDFQuery("tests/sample.pdf", parse_tree_cacher=pdfquery.FileCache("/tmp/"))
+    pdfquery.PDFQuery("tests/samples/IRS_1040A.pdf", parse_tree_cacher=pdfquery.FileCache("/tmp/"))
 
 
 Bulk Data Scraping
@@ -302,6 +302,9 @@ See "Bulk Data Scraping."
 Initialize the pdf.tree and pdf.pq objects. This will be called implicitly by pdf.extract(),
 but it's more efficient to call it explicitly with just the page numbers you need. Page numbers can be any
 combination of integers and lists, e.g. ``pdf.load(0,2,3,[4,5,6],range(10,15))``.
+
+You can call ``pdf.load(None)`` if for some reason you want to initialize without loading *any* pages
+(like you are only interested in the document info).
 
 Public But Less Useful Methods
 ================================

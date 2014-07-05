@@ -70,7 +70,7 @@ def _flatten(l, ltypes=(list, tuple)):
         i += 1
     return ltype(l)
 
-# these might be tacked onto the start of a decoded string after conversion
+# these might have to be removed from the start of a decoded string after conversion
 bom_headers = set([
     unicode(codecs.BOM_UTF8,'utf8'),
     unicode(codecs.BOM_UTF16_LE, 'utf-16LE'),
@@ -78,6 +78,7 @@ bom_headers = set([
     unicode(codecs.BOM_UTF32_LE, 'utf-32LE'),
     unicode(codecs.BOM_UTF32_BE, 'utf-32BE')
 ])
+
 def smart_unicode_decode(encoded_string):
     """
         Given an encoded string of unknown format, detect the format with chardet and return the unicode version.
@@ -94,6 +95,38 @@ def smart_unicode_decode(encoded_string):
         decoded_string = decoded_string[1:]
 
     return decoded_string
+
+def unicode_decode_object(obj, top=True):
+    """
+        Turn an arbitrary object into a unicode string, guessing correct decoding if possible.
+    """
+    # First we'll apply this recursively to the contents, if object is a list/dict/tuple.
+    # On the final run we want to fall through and convert the whole thing to a unicode string,
+    # so we don't return in that case.
+    if type(obj) == list:
+        obj = [unicode_decode_object(item, False) for item in obj]
+        if not top:
+            return obj
+    elif type(obj) == tuple:
+        obj = (unicode_decode_object(item, False) for item in obj)
+        if not top:
+            return obj
+    elif type(obj) == dict:
+        obj = dict((unicode_decode_object(k, False), unicode_decode_object(v, False)) for k, v in obj.items())
+        if not top:
+            return obj
+
+    # Now let's try converting to unicode:
+    try:
+        try:
+            return unicode(obj)
+        except UnicodeDecodeError:
+            # Probably an encoded-unicode string -- let's try to guess the encoding:
+            return smart_unicode_decode(obj)
+    except:
+        # This isn't anything we know how to deal with -- just return a placeholder.
+        return "[decode error]"
+
 
 # custom PDFDocument class
 class QPDFDocument(PDFDocument):
@@ -332,9 +365,6 @@ class PDFQuery(object):
         return results
     
 
-
-
-
     # tree building stuff
 
     def get_pyquery(self, tree=None, page_numbers=[]):
@@ -362,29 +392,31 @@ class PDFQuery(object):
             root = parser.makeelement("pdfxml")
             if self.doc.info:
                 for k, v in self.doc.info[0].items():
-                    v = resolve1(v)
-                    if type(v) == list:
-                        v = unicode([smart_unicode_decode(item) for item in v])
-                    else:
-                        v = smart_unicode_decode(v)
+                    k = unicode_decode_object(k)
+                    v = unicode_decode_object(resolve1(v))
                     try:
                         root.set(k, v)
                     except ValueError as e:
+                        # Sometimes keys have a character in them, like ':', that isn't allowed in XML attribute names.
+                        # If that happens we just replace non-word characters with '_'.
                         if "Invalid attribute name" in e.message:
                             k = re.sub('\W','_',k)
                             root.set(k, v)
 
-            # add pages
-            if page_numbers:
-                pages = [[n, self.get_layout(self.get_page(n))] for n in _flatten(page_numbers)]
-            else:
-                pages = enumerate(self.get_layouts())
-            for n, page in pages:
-                page = self._xmlize(page)
-                page.set('page_index', unicode(n))
-                page.set('page_label', self.doc.get_page_number(n))
-                root.append(page)
-            self._clean_text(root)
+            # Parse pages and append to root.
+            # If nothing was passed in for page_numbers, we do this for all pages,
+            # but if None was explicitly passed in, we skip it.
+            if not( len(page_numbers)==1 and page_numbers[0] is None ):
+                if page_numbers:
+                    pages = [[n, self.get_layout(self.get_page(n))] for n in _flatten(page_numbers)]
+                else:
+                    pages = enumerate(self.get_layouts())
+                for n, page in pages:
+                    page = self._xmlize(page)
+                    page.set('page_index', unicode(n))
+                    page.set('page_label', self.doc.get_page_number(n))
+                    root.append(page)
+                self._clean_text(root)
 
             # wrap root in ElementTree
             tree = etree.ElementTree(root)

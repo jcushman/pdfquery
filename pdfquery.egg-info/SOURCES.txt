@@ -13,6 +13,3 @@ pdfquery.egg-info/SOURCES.txt
 pdfquery.egg-info/dependency_links.txt
 pdfquery.egg-info/requires.txt
 pdfquery.egg-info/top_level.txt
-tests/__init__.py
-tests/sample.pdf
-tests/tests.py

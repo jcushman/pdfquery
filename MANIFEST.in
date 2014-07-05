@@ -1,2 +1,2 @@
 include *.txt *.rst
-include tests/sample.pdf
+recursive-exclude tests *

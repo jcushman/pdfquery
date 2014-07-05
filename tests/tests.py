@@ -1,6 +1,6 @@
 # to run:
 # pip install unittest2
-# unit2 discovery
+# unit2 discover
 
 import StringIO
 import sys
@@ -11,12 +11,16 @@ from pdfquery.cache import FileCache, DummyCache
 
 
 class TestPDFQuery(unittest2.TestCase):
+    """
+        Various tests based on the IRS_1040A sample doc.
+    """
 
-    def setUp(self):
-        self.pdf = pdfquery.PDFQuery("tests/sample.pdf",
+    @classmethod
+    def setUpClass(cls):
+        cls.pdf = pdfquery.PDFQuery("tests/samples/IRS_1040A.pdf",
                                      parse_tree_cacher=FileCache("/tmp/") if sys.argv[1]=='cache' else None,
                                      )
-        self.pdf.load()
+        cls.pdf.load()
 
     def test_xml_conversion(self):
         """
@@ -29,7 +33,8 @@ class TestPDFQuery(unittest2.TestCase):
 
         # get previous XML
         # this varies by Python version, because the float handling isn't quite the same
-        comparison_file = "tests/sample_output_python_2.6.xml" if sys.version_info[0] == 2 and sys.version_info[1] < 7 else "tests/sample_output.xml"
+        comparison_file = "tests/saved_output/IRS_1040A_output%s.xml" % (
+            "_python_2.6" if sys.version_info[0] == 2 and sys.version_info[1] < 7 else "")
         with open(comparison_file, 'rb') as f:
             saved_string = f.read()
 
@@ -37,7 +42,7 @@ class TestPDFQuery(unittest2.TestCase):
         if tree_string != saved_string:
             with open("tests/failed_output.xml", "wb") as out:
                 out.write(tree_string)
-            self.fail("XML conversion of sample.pdf has changed! Compare tests/sample_output.xml to tests/failed_output.xml.")
+            self.fail("XML conversion of sample.pdf has changed! Compare %s to tests/failed_output.xml." % comparison_file)
 
     def test_selectors(self):
         """
@@ -82,15 +87,32 @@ class TestPDFQuery(unittest2.TestCase):
     def test_page_numbers(self):
         self.assertEqual(self.pdf.tree.getroot()[0].get('page_label'), '1')
 
-class TestUnicode(unittest2.TestCase):
 
-    def setUp(self):
-        self.pdf = pdfquery.PDFQuery("tests/unicode_docinfo.pdf")
-        self.pdf.load()
+class TestDocInfo(unittest2.TestCase):
 
     def test_docinfo(self):
-        docinfo = self.pdf.tree.getroot()
-        self.assertEqual(docinfo.attrib['Title'], u'\u262d\U0001f61c\U0001f4a9Unicode is fun!')
+
+        doc_info_results = [
+            ["tests/samples/bug11.pdf",
+                 {'Producer': 'Mac OS X 10.9.3 Quartz PDFContext', 'Title': u'\u262d\U0001f61c\U0001f4a9Unicode is fun!',
+                  'Author': 'Russkel', 'Creator': 'Firefox', 'ModDate': "D:20140528141914+08'00'",
+                  'CreationDate': 'D:20140528061106Z', 'Subject': ''}],
+            ["tests/samples/bug15.pdf",
+                 {'Producer': 'Mac OS X 10.9.3 Quartz PDFContext', 'Author': 'Brepols Publishers',
+                  'Creator': 'PDFsharp 1.2.1269-g (www.pdfsharp.com)',
+                  'AAPL_Keywords': "[u'Brepols', u'Publishers', u'CTLO']",
+                  'Title': 'Exporter', 'ModDate': "D:20140614192741Z00'00'", 'Keywords': 'Brepols, Publishers, CTLO',
+                  'CreationDate': "D:20140614192741Z00'00'", 'Subject': 'Extrait de la Library of Latin Texts - Series A'}],
+            ["tests/samples/bug17.pdf",
+                 {'CreationDate': 'D:20140328164512Z', 'Creator': 'Adobe InDesign CC (Macintosh)',
+                  'ModDate': 'D:20140328164513Z', 'Producer': 'Adobe PDF Library 10.0.1', 'Trapped': '/False'}]
+        ]
+
+        for file_path, expected_results in doc_info_results:
+            pdf = pdfquery.PDFQuery(file_path)
+            pdf.load(None)
+            self.assertDictEqual(dict(pdf.tree.getroot().attrib), expected_results)
+
 
 if __name__ == '__main__':
     unittest2.main()
