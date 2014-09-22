@@ -1,3 +1,4 @@
+v0.2.7, 2014-09-22 -- Better Unicode text handling.
 v0.2.6, 2014-07-05 -- Yet more doc info handling.
 v0.2.5, 2014-06-29 -- Add Python 2.6 support; improve doc info handling.
 v0.2.4, 2014-05-29 -- Fix unicode and page number bugs.

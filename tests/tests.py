@@ -1,6 +1,10 @@
 # to run:
 # pip install unittest2
 # unit2 discover
+#
+# to debug:
+# pip install nose
+# nosetests --pdb
 
 import StringIO
 import sys
@@ -112,6 +116,17 @@ class TestDocInfo(unittest2.TestCase):
             pdf = pdfquery.PDFQuery(file_path)
             pdf.load(None)
             self.assertDictEqual(dict(pdf.tree.getroot().attrib), expected_results)
+
+
+class TestUnicode(unittest2.TestCase):
+
+    def test_unicode_text(self):
+        pdf = pdfquery.PDFQuery("tests/samples/bug18.pdf")
+        pdf.load()
+        self.assertEqual(
+            pdf.pq('LTTextLineHorizontal:contains("Hop Hing Oils")').text(),
+            u'5 Hop Hing Oils and Fats (Hong Kong) Ltd \uf06c \u7279\u5bf6\u7cbe\u88fd\u8c6c\u6cb9'
+        )
 
 
 if __name__ == '__main__':

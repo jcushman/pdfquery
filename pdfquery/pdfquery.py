@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import codecs
+import numbers
 import re
 import chardet
 
@@ -103,18 +104,21 @@ def unicode_decode_object(obj, top=True):
     # First we'll apply this recursively to the contents, if object is a list/dict/tuple.
     # On the final run we want to fall through and convert the whole thing to a unicode string,
     # so we don't return in that case.
+    obj_out = None
     if type(obj) == list:
-        obj = [unicode_decode_object(item, False) for item in obj]
-        if not top:
-            return obj
+        obj_out = [unicode_decode_object(item, False) for item in obj]
     elif type(obj) == tuple:
-        obj = (unicode_decode_object(item, False) for item in obj)
-        if not top:
-            return obj
+        obj_out = (unicode_decode_object(item, False) for item in obj)
     elif type(obj) == dict:
-        obj = dict((unicode_decode_object(k, False), unicode_decode_object(v, False)) for k, v in obj.items())
+        obj_out = dict((unicode_decode_object(k, False), unicode_decode_object(v, False)) for k, v in obj.items())
+    elif isinstance(obj, numbers.Number):
+        # stop numbers embedded in other objects from being turned into unicode
+        obj_out = obj
+
+    if obj_out is not None:
         if not top:
             return obj
+        obj = obj_out
 
     # Now let's try converting to unicode:
     try:
@@ -206,7 +210,7 @@ class QPDFDocument(PDFDocument):
 
             # decimal arabic
             else: #if num_type == 'D':
-                page_label = unicode(page_label)
+                page_label = unicode_decode_object(page_label)
 
         # handle string prefix
         if 'P' in label_format:
@@ -413,7 +417,7 @@ class PDFQuery(object):
                     pages = enumerate(self.get_layouts())
                 for n, page in pages:
                     page = self._xmlize(page)
-                    page.set('page_index', unicode(n))
+                    page.set('page_index', unicode_decode_object(n))
                     page.set('page_label', self.doc.get_page_number(n))
                     root.append(page)
                 self._clean_text(root)
@@ -485,7 +489,7 @@ class PDFQuery(object):
 
     def _getattrs(self, obj, *attrs):
         """ Return dictionary of given attrs on given object, if they exist, processing through filter_value(). """
-        return dict( (attr, unicode(self._filter_value(getattr(obj, attr)))) for attr in attrs if hasattr(obj, attr))
+        return dict( (attr, unicode_decode_object(self._filter_value(getattr(obj, attr)))) for attr in attrs if hasattr(obj, attr))
 
     def _filter_value(self, val):
         if self.round_floats:
