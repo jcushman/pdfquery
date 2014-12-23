@@ -225,7 +225,7 @@ class LayoutElement(etree.ElementBase):
     @property
     def layout(self):
         if not hasattr(self, '_layout'):
-            print "setting to None"
+            print ("setting to None")
             self._layout = None
         return self._layout
     @layout.setter
@@ -367,7 +367,7 @@ class PDFQuery(object):
         if as_dict:
             results = dict(results)
         return results
-    
+
 
     # tree building stuff
 
@@ -454,7 +454,7 @@ class PDFQuery(object):
             tags.update( self._getattrs(node, 'fontname','adv','upright','size') )
         elif type(node) == LTPage:
             tags.update( self._getattrs(node, 'pageid','rotate') )
-          
+
         # create node
         branch = parser.makeelement(node.__class__.__name__, tags)
         branch.layout = node
@@ -465,7 +465,7 @@ class PDFQuery(object):
         # add text
         if hasattr(node, 'get_text'):
             branch.text = node.get_text()
-                
+
         # add children if node is an iterable
         if hasattr(node, '__iter__'):
             last = None
