@@ -68,7 +68,7 @@ Usage
 Data Models
 ===========
 
-PDFQuery works by loading a PDF with pdfminer.Layout, converting the layout to an etree with lxml.etree,
+PDFQuery works by loading a PDF with pdfminer. Layout, converting the layout to an etree with lxml.etree,
 and then applying a pyquery wrapper. All three underlying libraries are exposed, so you can use any of their
 interfaces to get at the data you want.
 
