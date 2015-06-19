@@ -187,7 +187,7 @@ Search Target
 ~~~~~~~~~~~~~
 
 By default, ``extract`` searches the entire tree (or the part of the document loaded earlier by ``load()``,
-it it was limited to particular pages). If you want to limit the search to a part of the tree that you fetched with
+if it was limited to particular pages). If you want to limit the search to a part of the tree that you fetched with
 ``pdf.pq()`` earlier, pass that in as the second parameter after the list of searches.
 
 Formatting Functions
