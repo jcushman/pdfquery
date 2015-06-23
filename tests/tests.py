@@ -11,7 +11,7 @@ import sys
 import pdfquery
 import unittest2
 
-from pdfquery.cache import FileCache, DummyCache
+from pdfquery.cache import FileCache
 
 
 class TestPDFQuery(unittest2.TestCase):
@@ -21,9 +21,10 @@ class TestPDFQuery(unittest2.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pdf = pdfquery.PDFQuery("tests/samples/IRS_1040A.pdf",
-                                     parse_tree_cacher=FileCache("/tmp/") if sys.argv[1]=='cache' else None,
-                                     )
+        cls.pdf = pdfquery.PDFQuery(
+            "tests/samples/IRS_1040A.pdf",
+            parse_tree_cacher=FileCache("/tmp/") if sys.argv[1] == 'cache' else None,
+        )
         cls.pdf.load()
 
     def test_xml_conversion(self):
@@ -36,7 +37,8 @@ class TestPDFQuery(unittest2.TestCase):
         tree_string = tree_string.getvalue()
 
         # get previous XML
-        # this varies by Python version, because the float handling isn't quite the same
+        # this varies by Python version, because the float handling isn't quite
+        # the same
         comparison_file = "tests/saved_output/IRS_1040A_output%s.xml" % (
             "_python_2.6" if sys.version_info[0] == 2 and sys.version_info[1] < 7 else "")
         with open(comparison_file, 'rb') as f:
