@@ -48,7 +48,7 @@ class TestPDFQuery(unittest2.TestCase):
         if tree_string != saved_string:
             with open("tests/failed_output.xml", "wb") as out:
                 out.write(tree_string)
-            self.fail("XML conversion of sample.pdf has changed! Compare %s to tests/failed_output.xml." % comparison_file)
+            self.fail("XML conversion of sample pdf has changed! Compare %s to tests/failed_output.xml." % comparison_file)
 
     def test_selectors(self):
         """
@@ -130,6 +130,41 @@ class TestUnicode(unittest2.TestCase):
             u'5 Hop Hing Oils and Fats (Hong Kong) Ltd \uf06c \u7279\u5bf6\u7cbe\u88fd\u8c6c\u6cb9'
         )
 
+
+class TestAnnotations(unittest2.TestCase):
+    """
+        Ensure that annotations such as links are getting added to the PDFs
+        properly, as discussed in issue #28.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.pdf = pdfquery.PDFQuery(
+            "tests/samples/bug28.pdf",
+            parse_tree_cacher=FileCache("/tmp/") if sys.argv[1] == 'cache' else None,
+        )
+        cls.pdf.load()
+
+    def test_xml_conversion(self):
+        """
+            Test that converted XML hasn't changed from saved version.
+        """
+        # get current XML for sample file
+        tree_string = StringIO.StringIO()
+        self.pdf.tree.write(tree_string, pretty_print=True, encoding="utf-8")
+        tree_string = tree_string.getvalue()
+
+        # get previous XML
+        comparison_file = 'tests/saved_output/bug28.xml'
+        with open(comparison_file, 'rb') as f:
+            saved_string = f.read()
+
+        # compare current to previous
+        if tree_string != saved_string:
+            with open("tests/failed_output.xml", "wb") as out:
+                out.write(tree_string)
+            self.fail(
+                "XML conversion of sample pdf has changed! Compare %s to tests/failed_output.xml." % comparison_file)
 
 if __name__ == '__main__':
     unittest2.main()

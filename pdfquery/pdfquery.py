@@ -235,6 +235,7 @@ class LayoutElement(etree.ElementBase):
             print "setting to None"
             self._layout = None
         return self._layout
+
     @layout.setter
     def layout(self, value):
         self._layout = value
@@ -452,24 +453,36 @@ class PDFQuery(object):
                 self._clean_text(child)
                 if branch.text and branch.text.find(child.text) >= 0:
                     branch.text = branch.text.replace(child.text, '', 1)
-        except TypeError: # not an iterable node
+        except TypeError:  # not an iterable node
             pass
 
     def _xmlize(self, node, root=None):
+        if isinstance(node, LayoutElement):
+            # Already an XML element we can use
+            branch = node
+        else:
+            # collect attributes of current node
+            tags = self._getattrs(
+                node, 'y0', 'y1', 'x0', 'x1', 'width', 'height', 'bbox',
+                'linewidth', 'pts', 'index', 'name', 'matrix', 'word_margin'
+            )
+            if type(node) == LTImage:
+                tags.update(self._getattrs(
+                    node, 'colorspace', 'bits', 'imagemask', 'srcsize', 'stream',
+                    'name', 'pts', 'linewidth')
+                )
+            elif type(node) == LTChar:
+                tags.update(self._getattrs(
+                    node, 'fontname', 'adv', 'upright', 'size')
+                )
+            elif type(node) == LTPage:
+                tags.update(self._getattrs(node, 'pageid', 'rotate'))
 
-        # collect attributes of current node
-        tags = self._getattrs(node, 'y0', 'y1', 'x0', 'x1', 'width', 'height', 'bbox', 'linewidth', 'pts', 'index','name','matrix','word_margin' )
-        if type(node) == LTImage:
-            tags.update( self._getattrs(node, 'colorspace','bits','imagemask','srcsize','stream','name','pts','linewidth') )
-        elif type(node) == LTChar:
-            tags.update( self._getattrs(node, 'fontname','adv','upright','size') )
-        elif type(node) == LTPage:
-            tags.update( self._getattrs(node, 'pageid','rotate') )
+            # create node
+            branch = parser.makeelement(node.__class__.__name__, tags)
 
-        # create node
-        branch = parser.makeelement(node.__class__.__name__, tags)
         branch.layout = node
-        self._elements += [branch] # make sure layout keeps state
+        self._elements += [branch]  # make sure layout keeps state
         if root is None:
             root = branch
 
@@ -495,12 +508,13 @@ class PDFQuery(object):
                 else:
                     branch.append(child)
                 last = child
-
         return branch
 
     def _getattrs(self, obj, *attrs):
-        """ Return dictionary of given attrs on given object, if they exist, processing through filter_value(). """
-        return dict( (attr, unicode_decode_object(self._filter_value(getattr(obj, attr)))) for attr in attrs if hasattr(obj, attr))
+        """ Return dictionary of given attrs on given object, if they exist,
+        processing through _filter_value().
+        """
+        return dict((attr, unicode_decode_object(self._filter_value(getattr(obj, attr)))) for attr in attrs if hasattr(obj, attr))
 
     def _filter_value(self, val):
         if self.round_floats:
@@ -510,10 +524,7 @@ class PDFQuery(object):
                 val = [self._filter_value(item) for item in val]
         return val
 
-
-
     # page access stuff
-
     def get_page(self, page_number):
         """ Get PDFPage object -- 0-indexed."""
         return self._cached_pages(target_page=page_number)
@@ -523,7 +534,9 @@ class PDFQuery(object):
         if type(page) == int:
             page = self.get_page(page)
         self.interpreter.process_page(page)
-        return self.device.get_result()
+        layout = self.device.get_result()
+        layout = self._add_annots(layout, page.annots)
+        return layout
 
     def get_layouts(self):
         """ Get list of PDFMiner Layout objects for each page. """
@@ -556,6 +569,35 @@ class PDFQuery(object):
                 return None
         self._pages += list(self._pages_iter)
         return self._pages
+
+    def _add_annots(self, layout, annots):
+        """Adds annotations to the layout object
+        """
+        if annots:
+            for annot in annots:
+                annot = annot.resolve()
+                annot['bbox'] = annot.pop('Rect')  # Rename key
+                annot = self._set_hwxy_attrs(annot)
+                annot['URI'] = annot['A']['URI']
+                for k, v in annot.iteritems():
+                    if not isinstance(v, basestring):
+                        annot[k] = unicode_decode_object(v)
+                elem = parser.makeelement('Annot', annot)
+                layout.add(elem)
+        return layout
+
+    def _set_hwxy_attrs(self, attr):
+        """Using the bbox attribute, set the h, w, x0, x1, y0, and y1
+        attributes.
+        """
+        bbox = attr['bbox']
+        attr['x0'] = bbox[0]
+        attr['x1'] = bbox[2]
+        attr['y0'] = bbox[1]
+        attr['y1'] = bbox[3]
+        attr['height'] = attr['y1'] - attr['y0']
+        attr['width'] = attr['x1'] - attr['x0']
+        return attr
 
 
 if __name__ == "__main__":
