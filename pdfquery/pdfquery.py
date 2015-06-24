@@ -25,36 +25,51 @@ import cssselect
 from pdftranslator import PDFQueryTranslator
 from cache import DummyCache
 
+
 # Re-sort the PDFMiner Layout tree so elements that fit inside other elements
 # will be children of them
-
 def _append_sorted(root, el, comparator):
-    """ Add el as a child of root, or as a child of one of root's children. Comparator is a function(a, b) returning > 0 if a is a child of b, < 0 if b is a child of a, 0 if neither. """
+    """ Add el as a child of root, or as a child of one of root's children.
+    Comparator is a function(a, b) returning > 0 if a is a child of b, < 0 if
+    b is a child of a, 0 if neither.
+    """
     for child in root:
         rel = comparator(el, child)
-        if rel > 0: # el fits inside child, add to child and return
+        if rel > 0:
+            # el fits inside child, add to child and return
             _append_sorted(child, el, comparator)
             return
-        if rel < 0:  # child fits inside el, move child into el (may move more than one)
+        if rel < 0:
+            # child fits inside el, move child into el (may move more than one)
             _append_sorted(el, child, comparator)
     # we weren't added to a child, so add to root
     root.append(el)
 
+
 def _box_in_box(el, child):
     """ Return True if child is contained within el. """
-    return float(el.get('x0')) <= float(child.get('x0')) and float(el.get('x1')) >= float(child.get('x1')) and float(el.get('y0')) <= float(child.get('y0')) and float(el.get('y1')) >= float(child.get('y1'))
+    return all([
+        float(el.get('x0')) <= float(child.get('x0')),
+        float(el.get('x1')) >= float(child.get('x1')),
+        float(el.get('y0')) <= float(child.get('y0')),
+        float(el.get('y1')) >= float(child.get('y1')),
+    ])
 
-_comp_bbox_keys_required = set(['x0', 'x1', 'y0', 'y1'])
 
+_comp_bbox_keys_required = {'x0', 'x1', 'y0', 'y1'}
 def _comp_bbox(el, el2):
     """ Return 1 if el in el2, -1 if el2 in el, else 0"""
     # only compare if both elements have x/y coordinates
-    if _comp_bbox_keys_required <= set(el.keys()) and _comp_bbox_keys_required <= set(el2.keys()):
-        if _box_in_box(el2, el): return 1
-        if _box_in_box(el, el2): return -1
+    if _comp_bbox_keys_required <= set(el.keys()) and \
+            _comp_bbox_keys_required <= set(el2.keys()):
+        if _box_in_box(el2, el):
+            return 1
+        if _box_in_box(el, el2):
+            return -1
     return 0
 
-# random helpers
+
+# assorted helpers
 def _flatten(l, ltypes=(list, tuple)):
     # via http://rightfootin.blogspot.com/2006/09/more-on-python-flatten.html
     ltype = type(l)
@@ -73,24 +88,32 @@ def _flatten(l, ltypes=(list, tuple)):
 
 # these might have to be removed from the start of a decoded string after
 # conversion
-bom_headers = set([
-    unicode(codecs.BOM_UTF8,'utf8'),
+bom_headers = {
+    unicode(codecs.BOM_UTF8, 'utf8'),
     unicode(codecs.BOM_UTF16_LE, 'utf-16LE'),
     unicode(codecs.BOM_UTF16_BE, 'utf-16BE'),
     unicode(codecs.BOM_UTF32_LE, 'utf-32LE'),
     unicode(codecs.BOM_UTF32_BE, 'utf-32BE')
-])
+}
+
 
 def smart_unicode_decode(encoded_string):
     """
-        Given an encoded string of unknown format, detect the format with chardet and return the unicode version.
-        Example input from bug #11: '\xfe\xff\x00I\x00n\x00s\x00p\x00e\x00c\x00t\x00i\x00o\x00n\x00 \x00R\x00e\x00p\x00o\x00r\x00t\x00 \x00v\x002\x00.\x002'
+        Given an encoded string of unknown format, detect the format with
+        chardet and return the unicode version.
+        Example input from bug #11:
+         ('\xfe\xff\x00I\x00n\x00s\x00p\x00e\x00c\x00t\x00i\x00o\x00n\x00'
+          '\x00R\x00e\x00p\x00o\x00r\x00t\x00 \x00v\x002\x00.\x002')
     """
     if not encoded_string:
         return u''
 
     detected_encoding = chardet.detect(encoded_string)
-    decoded_string = unicode(encoded_string, encoding=detected_encoding['encoding'] or 'utf8', errors='replace')
+    decoded_string = unicode(
+        encoded_string,
+        encoding=detected_encoding['encoding'] or 'utf8',
+        errors='replace'
+    )
 
     # unicode string may still have useless BOM character at the beginning
     if decoded_string and decoded_string[0] in bom_headers:
@@ -98,26 +121,31 @@ def smart_unicode_decode(encoded_string):
 
     return decoded_string
 
+
 def unicode_decode_object(obj, top=True):
     """
-        Turn an arbitrary object into a unicode string, guessing correct
-        decoding if possible.
+    Turn an arbitrary object into a unicode string, guessing correct
+    decoding if possible.
 
-        >>> unicode_decode_object([1])
-        u'[1]'
-        >>> unicode_decode_object([{'f': 1}])
-        u"[{'f': 1}]"
+    >>> unicode_decode_object([1])
+    u'[1]'
+    >>> unicode_decode_object([{'f': 1}])
+    u"[{'f': 1}]"
     """
-    # First we'll apply this recursively to the contents, if object is a list/dict/tuple.
-    # On the final run we want to fall through and convert the whole thing to a unicode string,
-    # so we don't return in that case.
+    # First we'll apply this recursively to the contents, if object is a
+    # list/dict/tuple.
+    # On the final run we want to fall through and convert the whole thing to a
+    # unicode string, so we don't return in that case.
     obj_out = None
     if type(obj) == list:
         obj_out = [unicode_decode_object(item, False) for item in obj]
     elif type(obj) == tuple:
         obj_out = (unicode_decode_object(item, False) for item in obj)
     elif type(obj) == dict:
-        obj_out = dict((unicode_decode_object(k, False), unicode_decode_object(v, False)) for k, v in obj.items())
+        obj_out = dict(
+            (unicode_decode_object(k, False),
+             unicode_decode_object(v, False)) for k, v in obj.items()
+        )
     elif isinstance(obj, numbers.Number):
         # stop numbers embedded in other objects from being turned into unicode
         obj_out = obj
@@ -132,10 +160,12 @@ def unicode_decode_object(obj, top=True):
         try:
             return unicode(obj)
         except UnicodeDecodeError:
-            # Probably an encoded-unicode string -- let's try to guess the encoding:
+            # Probably an encoded-unicode string -- let's try to guess the
+            # encoding:
             return smart_unicode_decode(obj)
     except:
-        # This isn't anything we know how to deal with -- just return a placeholder.
+        # This isn't anything we know how to deal with -- just return a
+        # placeholder.
         return "[decode error]"
 
 
@@ -143,7 +173,8 @@ def unicode_decode_object(obj, top=True):
 class QPDFDocument(PDFDocument):
     def get_page_number(self, index):
         """
-        Given an index, return page label as specified by catalog['PageLabels']['Nums']
+        Given an index, return page label as specified by
+        catalog['PageLabels']['Nums']
 
         In a PDF, page labels are stored as a list of pairs, like
         [starting_index, label_format, starting_index, label_format ...]
@@ -151,16 +182,19 @@ class QPDFDocument(PDFDocument):
         For example:
         [0, {'S': 'D', 'St': 151}, 4, {'S':'R', 'P':'Foo'}]
 
-        So we have to first find the correct label_format based on the closest starting_index lower than the
-        requested index, then use the label_format to convert the index to a page label.
+        So we have to first find the correct label_format based on the closest
+        starting_index lower than the requested index, then use the
+        label_format to convert the index to a page label.
 
         Label format meaning:
             /S = [
                     D Decimal arabic numerals
                     R Uppercase roman numerals
                     r Lowercase roman numerals
-                    A Uppercase letters (A to Z for the first 26 pages, AA to ZZ for the next 26, and so on)
-                    a Lowercase letters (a to z for the first 26 pages, aa to zz for the next 26, and so on)
+                    A Uppercase letters (A to Z for the first 26 pages, AA to ZZ
+                      for the next 26, and so on)
+                    a Lowercase letters (a to z for the first 26 pages, aa to zz
+                      for the next 26, and so on)
                 ] (if no /S, just use prefix ...)
             /P = text string label
             /St = integer start value
@@ -171,7 +205,8 @@ class QPDFDocument(PDFDocument):
             try:
                 page_ranges = resolve1(self.catalog['PageLabels'])['Nums']
                 assert len(page_ranges) > 1 and len(page_ranges) % 2 == 0
-                self.page_range_pairs = list(reversed(zip(page_ranges[::2], page_ranges[1::2])))
+                self.page_range_pairs = list(
+                    reversed(zip(page_ranges[::2], page_ranges[1::2])))
             except:
                 self.page_range_pairs = []
 
@@ -181,7 +216,7 @@ class QPDFDocument(PDFDocument):
         # find page range containing index
         for starting_index, label_format in self.page_range_pairs:
             if starting_index <= index:
-                break # we found correct label_format
+                break  # we found correct label_format
         label_format = resolve1(label_format)
 
         page_label = ""
@@ -191,7 +226,7 @@ class QPDFDocument(PDFDocument):
 
             # first find number for this page ...
             page_label = index - starting_index
-            if 'St' in label_format: # alternate start value
+            if 'St' in label_format:  # alternate start value
                 page_label += label_format['St']
             else:
                 page_label += 1
@@ -208,7 +243,8 @@ class QPDFDocument(PDFDocument):
 
             # letters
             elif num_type.lower() == 'a':
-                # a to z for the first 26 pages, aa to zz for the next 26, and so on
+                # a to z for the first 26 pages, aa to zz for the next 26, and
+                # so on
                 letter = chr(page_label % 26 + 65)
                 letter *= page_label / 26 + 1
                 if num_type == 'a':
@@ -216,7 +252,7 @@ class QPDFDocument(PDFDocument):
                 page_label = letter
 
             # decimal arabic
-            else: #if num_type == 'D':
+            else:  # if num_type == 'D':
                 page_label = unicode_decode_object(page_label)
 
         # handle string prefix
@@ -243,18 +279,20 @@ parser_lookup = etree.ElementDefaultClassLookup(element=LayoutElement)
 parser = etree.XMLParser()
 parser.set_element_class_lookup(parser_lookup)
 
-# main class
 
+# main class
 class PDFQuery(object):
-    def __init__(self, file,
-                    merge_tags=('LTChar', 'LTAnno'),
-                    round_floats=True,
-                    round_digits=3,
-                    input_text_formatter=None,
-                    normalize_spaces=True,
-                    resort=True,
-                    parse_tree_cacher=None,
-                    ):
+    def __init__(
+            self,
+            file,
+            merge_tags=('LTChar', 'LTAnno'),
+            round_floats=True,
+            round_digits=3,
+            input_text_formatter=None,
+            normalize_spaces=True,
+            resort=True,
+            parse_tree_cacher=None,
+    ):
         # store input
         self.merge_tags = merge_tags
         self.round_floats = round_floats
@@ -316,35 +354,35 @@ class PDFQuery(object):
 
     def load(self, *page_numbers):
         """
-            Load etree and pyquery object for entire document, or given page numbers (ints or lists).
-            After this is called, objects are available at pdf.tree and pdf.pq.
+        Load etree and pyquery object for entire document, or given page
+        numbers (ints or lists). After this is called, objects are
+        available at pdf.tree and pdf.pq.
 
-            >>> pdf.load()
-            >>> pdf.tree
-            <lxml.etree._ElementTree object at ...>
-            >>> pdf.pq('LTPage')
-            [<LTPage>, <LTPage>]
-            >>> pdf.load(1)
-            >>> pdf.pq('LTPage')
-            [<LTPage>]
-            >>> pdf.load(0,1)
-            >>> pdf.pq('LTPage')
-            [<LTPage>, <LTPage>]
+        >>> pdf.load()
+        >>> pdf.tree
+        <lxml.etree._ElementTree object at ...>
+        >>> pdf.pq('LTPage')
+        [<LTPage>, <LTPage>]
+        >>> pdf.load(1)
+        >>> pdf.pq('LTPage')
+        [<LTPage>]
+        >>> pdf.load(0, 1)
+        >>> pdf.pq('LTPage')
+        [<LTPage>, <LTPage>]
         """
         self.tree = self.get_tree(*_flatten(page_numbers))
         self.pq = self.get_pyquery(self.tree)
 
     def extract(self, searches, tree=None, as_dict=True):
         """
-            >>> foo = pdf.extract( [ ['pages', 'LTPage'] ])
+            >>> foo = pdf.extract([['pages', 'LTPage']])
             >>> foo
             {'pages': [<LTPage>, <LTPage>]}
-            >>> pdf.extract( [ ['bar', ':in_bbox("100,100,400,400")'] ], foo['pages'][0])
+            >>> pdf.extract([['bar', ':in_bbox("100,100,400,400")']], foo['pages'][0])
             {'bar': [<LTTextLineHorizontal>, <LTTextBoxHorizontal>,...
         """
         if self.tree is None or self.pq is None:
             self.load()
-        pq = PyQuery(tree, css_translator=PDFQueryTranslator()) if tree is not None else self.pq
         if tree is None:
             pq = self.pq
         else:
@@ -357,19 +395,24 @@ class PDFQuery(object):
                 search = list(search) + [formatter]
             key, search, tmp_formatter = search
             if key == 'with_formatter':
-                if isinstance(search, basestring): # is a pyquery method name, e.g. 'text'
+                if isinstance(search, basestring):
+                    # is a pyquery method name, e.g. 'text'
                     formatter = lambda o, search=search: getattr(o, search)()
-                elif hasattr(search, '__call__') or not search: # is a method, or None to end formatting
+                elif hasattr(search, '__call__') or not search:
+                    # is a method, or None to end formatting
                     formatter = search
                 else:
-                    raise TypeError("Formatter should be either a pyquery method name or a callable function.")
+                    raise TypeError("Formatter should be either a pyquery "
+                                    "method name or a callable function.")
             elif key == 'with_parent':
                 parent = pq(search) if search else pq
             else:
                 try:
-                    result = parent("*").filter(search) if hasattr(search, '__call__') else parent(search)
+                    result = parent("*").filter(search) if \
+                        hasattr(search, '__call__') else parent(search)
                 except cssselect.SelectorSyntaxError, e:
-                    raise cssselect.SelectorSyntaxError( "Error applying selector '%s': %s" % (search, e) )
+                    raise cssselect.SelectorSyntaxError(
+                        "Error applying selector '%s': %s" % (search, e))
                 if tmp_formatter:
                     result = tmp_formatter(result)
                 results += result if type(result) == tuple else [[key, result]]
@@ -425,7 +468,8 @@ class PDFQuery(object):
             # pages, but if None was explicitly passed in, we skip it.
             if not(len(page_numbers) == 1 and page_numbers[0] is None):
                 if page_numbers:
-                    pages = [[n, self.get_layout(self.get_page(n))] for n in _flatten(page_numbers)]
+                    pages = [[n, self.get_layout(self.get_page(n))] for n in
+                             _flatten(page_numbers)]
                 else:
                     pages = enumerate(self.get_layouts())
                 for n, page in pages:
@@ -468,8 +512,8 @@ class PDFQuery(object):
             )
             if type(node) == LTImage:
                 tags.update(self._getattrs(
-                    node, 'colorspace', 'bits', 'imagemask', 'srcsize', 'stream',
-                    'name', 'pts', 'linewidth')
+                    node, 'colorspace', 'bits', 'imagemask', 'srcsize',
+                    'stream', 'name', 'pts', 'linewidth')
                 )
             elif type(node) == LTChar:
                 tags.update(self._getattrs(
@@ -500,7 +544,10 @@ class PDFQuery(object):
                         continue
                     elif last is not None and last.tag in self.merge_tags:
                         last.text += child.text
-                        last.set('_obj_id', last.get('_obj_id')+","+child.get('_obj_id'))
+                        last.set(
+                            '_obj_id',
+                            last.get('_obj_id') + "," + child.get('_obj_id')
+                        )
                         continue
                 # sort children by bounding boxes
                 if self.resort:
@@ -514,7 +561,13 @@ class PDFQuery(object):
         """ Return dictionary of given attrs on given object, if they exist,
         processing through _filter_value().
         """
-        return dict((attr, unicode_decode_object(self._filter_value(getattr(obj, attr)))) for attr in attrs if hasattr(obj, attr))
+        filtered_attrs = {}
+        for attr in attrs:
+            if hasattr(obj, attr):
+                filtered_attrs[attr] = unicode_decode_object(
+                    self._filter_value(getattr(obj, attr))
+                )
+        return filtered_attrs
 
     def _filter_value(self, val):
         if self.round_floats:
@@ -544,25 +597,26 @@ class PDFQuery(object):
 
     def _cached_pages(self, target_page=-1):
         """
-            Get a page or all pages from page generator, caching results.
-            This is necessary because PDFMiner searches recursively for pages,
-            so we won't know how many there are until we parse the whole document,
-            which we don't want to do until we need to.
+        Get a page or all pages from page generator, caching results.
+        This is necessary because PDFMiner searches recursively for pages,
+        so we won't know how many there are until we parse the whole document,
+        which we don't want to do until we need to.
         """
         try:
             # pdfminer < 20131022
             self._pages_iter = self._pages_iter or self.doc.get_pages()
         except AttributeError:
             # pdfminer >= 20131022
-            self._pages_iter = self._pages_iter or PDFPage.create_pages(self.doc)
+            self._pages_iter = self._pages_iter or \
+                PDFPage.create_pages(self.doc)
 
         if target_page >= 0:
             while len(self._pages) <= target_page:
-                next = self._pages_iter.next()
-                if not next:
+                next_page = self._pages_iter.next()
+                if not next_page:
                     return None
-                next.page_number = 0
-                self._pages += [next]
+                next_page.page_number = 0
+                self._pages += [next_page]
             try:
                 return self._pages[target_page]
             except IndexError:
@@ -590,7 +644,8 @@ class PDFQuery(object):
                 layout.add(elem)
         return layout
 
-    def _set_hwxy_attrs(self, attr):
+    @staticmethod
+    def _set_hwxy_attrs(attr):
         """Using the bbox attribute, set the h, w, x0, x1, y0, and y1
         attributes.
         """
