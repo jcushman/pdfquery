@@ -48,13 +48,15 @@ class TestPDFQuery(unittest2.TestCase):
         if tree_string != saved_string:
             with open("tests/failed_output.xml", "wb") as out:
                 out.write(tree_string)
-            self.fail("XML conversion of sample pdf has changed! Compare %s to tests/failed_output.xml." % comparison_file)
+            self.fail("XML conversion of sample pdf has changed! Compare %s to "
+                      "tests/failed_output.xml." % comparison_file)
 
     def test_selectors(self):
         """
             Test the :contains and :in_bbox selectors.
         """
-        label = self.pdf.pq('LTTextLineHorizontal:contains("Your first name and initial")')
+        label = self.pdf.pq('LTTextLineHorizontal:contains("Your first name '
+                            'and initial")')
         self.assertEqual(len(label), 1)
 
         left_corner = float(label.attr('x0'))
@@ -63,7 +65,12 @@ class TestPDFQuery(unittest2.TestCase):
         bottom_corner = float(label.attr('y0'))
         self.assertEqual(bottom_corner, 714.694)
 
-        name = self.pdf.pq('LTTextLineHorizontal:in_bbox("%s, %s, %s, %s")' % (left_corner, bottom_corner - 30, left_corner + 150, bottom_corner)).text()
+        name = self.pdf.pq('LTTextLineHorizontal:in_bbox("%s, %s, %s, %s")' %
+                           (left_corner,
+                            bottom_corner - 30,
+                            left_corner + 150,
+                            bottom_corner)
+                           ).text()
         self.assertEqual(name, "John E.")
 
     def test_extract(self):
@@ -79,8 +86,10 @@ class TestPDFQuery(unittest2.TestCase):
 
             ('with_parent', 'LTPage[pageid="2"]'),
 
-            ('oath', 'LTTextLineHorizontal:contains("perjury")', lambda match: match.text()[:30] + "..."),
-            ('year', 'LTTextLineHorizontal:contains("Form 1040A (")', lambda match: int(match.text()[-5:-1]))
+            ('oath', 'LTTextLineHorizontal:contains("perjury")',
+             lambda match: match.text()[:30] + "..."),
+            ('year', 'LTTextLineHorizontal:contains("Form 1040A (")',
+             lambda match: int(match.text()[-5:-1]))
         ])
 
         self.assertDictEqual(values, {
@@ -100,24 +109,35 @@ class TestDocInfo(unittest2.TestCase):
 
         doc_info_results = [
             ["tests/samples/bug11.pdf",
-                 {'Producer': 'Mac OS X 10.9.3 Quartz PDFContext', 'Title': u'\u262d\U0001f61c\U0001f4a9Unicode is fun!',
-                  'Author': 'Russkel', 'Creator': 'Firefox', 'ModDate': "D:20140528141914+08'00'",
-                  'CreationDate': 'D:20140528061106Z', 'Subject': ''}],
+             {'Producer': 'Mac OS X 10.9.3 Quartz PDFContext',
+              'Title': u'\u262d\U0001f61c\U0001f4a9Unicode is fun!',
+              'Author': 'Russkel', 'Creator': 'Firefox',
+              'ModDate': "D:20140528141914+08'00'",
+              'CreationDate': 'D:20140528061106Z', 'Subject': ''}],
             ["tests/samples/bug15.pdf",
-                 {'Producer': 'Mac OS X 10.9.3 Quartz PDFContext', 'Author': 'Brepols Publishers',
-                  'Creator': 'PDFsharp 1.2.1269-g (www.pdfsharp.com)',
-                  'AAPL_Keywords': "[u'Brepols', u'Publishers', u'CTLO']",
-                  'Title': 'Exporter', 'ModDate': "D:20140614192741Z00'00'", 'Keywords': 'Brepols, Publishers, CTLO',
-                  'CreationDate': "D:20140614192741Z00'00'", 'Subject': 'Extrait de la Library of Latin Texts - Series A'}],
+             {'Producer': 'Mac OS X 10.9.3 Quartz PDFContext',
+              'Author': 'Brepols Publishers',
+              'Creator': 'PDFsharp 1.2.1269-g (www.pdfsharp.com)',
+              'AAPL_Keywords': "[u'Brepols', u'Publishers', u'CTLO']",
+              'Title': 'Exporter',
+              'ModDate': "D:20140614192741Z00'00'",
+              'Keywords': 'Brepols, Publishers, CTLO',
+              'CreationDate': "D:20140614192741Z00'00'",
+              'Subject': 'Extrait de la Library of Latin Texts - Series A'}],
             ["tests/samples/bug17.pdf",
-                 {'CreationDate': 'D:20140328164512Z', 'Creator': 'Adobe InDesign CC (Macintosh)',
-                  'ModDate': 'D:20140328164513Z', 'Producer': 'Adobe PDF Library 10.0.1', 'Trapped': '/False'}]
+             {'CreationDate': 'D:20140328164512Z',
+              'Creator': 'Adobe InDesign CC (Macintosh)',
+              'ModDate': 'D:20140328164513Z',
+              'Producer': 'Adobe PDF Library 10.0.1', 'Trapped': '/False'}]
         ]
 
         for file_path, expected_results in doc_info_results:
             pdf = pdfquery.PDFQuery(file_path)
             pdf.load(None)
-            self.assertDictEqual(dict(pdf.tree.getroot().attrib), expected_results)
+            self.assertDictEqual(
+                dict(pdf.tree.getroot().attrib),
+                expected_results
+            )
 
 
 class TestUnicode(unittest2.TestCase):
@@ -127,7 +147,8 @@ class TestUnicode(unittest2.TestCase):
         pdf.load()
         self.assertEqual(
             pdf.pq('LTTextLineHorizontal:contains("Hop Hing Oils")').text(),
-            u'5 Hop Hing Oils and Fats (Hong Kong) Ltd \uf06c \u7279\u5bf6\u7cbe\u88fd\u8c6c\u6cb9'
+            (u'5 Hop Hing Oils and Fats (Hong Kong) Ltd \uf06c '
+             u'\u7279\u5bf6\u7cbe\u88fd\u8c6c\u6cb9')
         )
 
 
@@ -163,8 +184,8 @@ class TestAnnotations(unittest2.TestCase):
         if tree_string != saved_string:
             with open("tests/failed_output.xml", "wb") as out:
                 out.write(tree_string)
-            self.fail(
-                "XML conversion of sample pdf has changed! Compare %s to tests/failed_output.xml." % comparison_file)
+            self.fail("XML conversion of sample pdf has changed! Compare %s "
+                      "to tests/failed_output.xml." % comparison_file)
 
 if __name__ == '__main__':
     unittest2.main()
