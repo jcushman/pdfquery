@@ -630,9 +630,13 @@ class PDFQuery(object):
         if annots:
             for annot in annots:
                 annot = annot.resolve()
-                annot['bbox'] = annot.pop('Rect')  # Rename key
-                annot = self._set_hwxy_attrs(annot)
-                annot['URI'] = annot['A']['URI']
+                if annot.get('Rect') is not None:
+                    annot['bbox'] = annot.pop('Rect')  # Rename key
+                    annot = self._set_hwxy_attrs(annot)
+                try:
+                    annot['URI'] = annot['A']['URI']
+                except KeyError:
+                    pass
                 for k, v in annot.iteritems():
                     if not isinstance(v, basestring):
                         annot[k] = unicode_decode_object(v)
