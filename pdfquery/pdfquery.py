@@ -23,9 +23,10 @@ from pyquery import PyQuery
 from lxml import etree
 import cssselect
 from pdftranslator import PDFQueryTranslator
-from cache import DummyCache, FileCache
+from cache import DummyCache
 
-# Re-sort the PDFMiner Layout tree so elements that fit inside other elements will be children of them
+# Re-sort the PDFMiner Layout tree so elements that fit inside other elements
+# will be children of them
 
 def _append_sorted(root, el, comparator):
     """ Add el as a child of root, or as a child of one of root's children. Comparator is a function(a, b) returning > 0 if a is a child of b, < 0 if b is a child of a, 0 if neither. """
@@ -34,7 +35,7 @@ def _append_sorted(root, el, comparator):
         if rel > 0: # el fits inside child, add to child and return
             _append_sorted(child, el, comparator)
             return
-        if rel < 0: # child fits inside el, move child into el (may move more than one)
+        if rel < 0:  # child fits inside el, move child into el (may move more than one)
             _append_sorted(el, child, comparator)
     # we weren't added to a child, so add to root
     root.append(el)
@@ -54,7 +55,6 @@ def _comp_bbox(el, el2):
     return 0
 
 # random helpers
-
 def _flatten(l, ltypes=(list, tuple)):
     # via http://rightfootin.blogspot.com/2006/09/more-on-python-flatten.html
     ltype = type(l)
@@ -71,7 +71,8 @@ def _flatten(l, ltypes=(list, tuple)):
         i += 1
     return ltype(l)
 
-# these might have to be removed from the start of a decoded string after conversion
+# these might have to be removed from the start of a decoded string after
+# conversion
 bom_headers = set([
     unicode(codecs.BOM_UTF8,'utf8'),
     unicode(codecs.BOM_UTF16_LE, 'utf-16LE'),
@@ -99,7 +100,13 @@ def smart_unicode_decode(encoded_string):
 
 def unicode_decode_object(obj, top=True):
     """
-        Turn an arbitrary object into a unicode string, guessing correct decoding if possible.
+        Turn an arbitrary object into a unicode string, guessing correct
+        decoding if possible.
+
+        >>> unicode_decode_object([1])
+        u'[1]'
+        >>> unicode_decode_object([{'f': 1}])
+        u"[{'f': 1}]"
     """
     # First we'll apply this recursively to the contents, if object is a list/dict/tuple.
     # On the final run we want to fall through and convert the whole thing to a unicode string,
@@ -228,6 +235,7 @@ class LayoutElement(etree.ElementBase):
             print "setting to None"
             self._layout = None
         return self._layout
+
     @layout.setter
     def layout(self, value):
         self._layout = value
@@ -280,7 +288,8 @@ class PDFQuery(object):
             doc = QPDFDocument(parser)
             parser.set_document(doc)
         if hasattr(doc, 'initialize'):
-            # as of pdfminer==20140328, "PDFDocument.initialize() method is removed and no longer needed."
+            # as of pdfminer==20140328, "PDFDocument.initialize() method is
+            # removed and no longer needed."
             doc.initialize()
         self.doc = doc
         self.parser = parser
@@ -367,15 +376,16 @@ class PDFQuery(object):
         if as_dict:
             results = dict(results)
         return results
-    
 
     # tree building stuff
-
-    def get_pyquery(self, tree=None, page_numbers=[]):
+    def get_pyquery(self, tree=None, page_numbers=None):
         """
             Wrap given tree in pyquery and return.
-            If no tree supplied, will generate one from given page_numbers, or all page numbers.
+            If no tree supplied, will generate one from given page_numbers, or
+            all page numbers.
         """
+        if not page_numbers:
+            page_numbers = []
         if tree is None:
             if not page_numbers and self.tree is not None:
                 tree = self.tree
@@ -387,7 +397,8 @@ class PDFQuery(object):
 
     def get_tree(self, *page_numbers):
         """
-            Return lxml.etree.ElementTree for entire document, or page numbers given if any.
+            Return lxml.etree.ElementTree for entire document, or page numbers
+            given if any.
         """
         cache_key = "_".join(map(str, _flatten(page_numbers)))
         tree = self._parse_tree_cacher.get(cache_key)
@@ -401,16 +412,18 @@ class PDFQuery(object):
                     try:
                         root.set(k, v)
                     except ValueError as e:
-                        # Sometimes keys have a character in them, like ':', that isn't allowed in XML attribute names.
-                        # If that happens we just replace non-word characters with '_'.
+                        # Sometimes keys have a character in them, like ':',
+                        # that isn't allowed in XML attribute names.
+                        # If that happens we just replace non-word characters
+                        # with '_'.
                         if "Invalid attribute name" in e.message:
-                            k = re.sub('\W','_',k)
+                            k = re.sub('\W', '_', k)
                             root.set(k, v)
 
             # Parse pages and append to root.
-            # If nothing was passed in for page_numbers, we do this for all pages,
-            # but if None was explicitly passed in, we skip it.
-            if not( len(page_numbers)==1 and page_numbers[0] is None ):
+            # If nothing was passed in for page_numbers, we do this for all
+            # pages, but if None was explicitly passed in, we skip it.
+            if not(len(page_numbers) == 1 and page_numbers[0] is None):
                 if page_numbers:
                     pages = [[n, self.get_layout(self.get_page(n))] for n in _flatten(page_numbers)]
                 else:
@@ -440,32 +453,43 @@ class PDFQuery(object):
                 self._clean_text(child)
                 if branch.text and branch.text.find(child.text) >= 0:
                     branch.text = branch.text.replace(child.text, '', 1)
-        except TypeError: # not an iterable node
+        except TypeError:  # not an iterable node
             pass
 
-
     def _xmlize(self, node, root=None):
+        if isinstance(node, LayoutElement):
+            # Already an XML element we can use
+            branch = node
+        else:
+            # collect attributes of current node
+            tags = self._getattrs(
+                node, 'y0', 'y1', 'x0', 'x1', 'width', 'height', 'bbox',
+                'linewidth', 'pts', 'index', 'name', 'matrix', 'word_margin'
+            )
+            if type(node) == LTImage:
+                tags.update(self._getattrs(
+                    node, 'colorspace', 'bits', 'imagemask', 'srcsize', 'stream',
+                    'name', 'pts', 'linewidth')
+                )
+            elif type(node) == LTChar:
+                tags.update(self._getattrs(
+                    node, 'fontname', 'adv', 'upright', 'size')
+                )
+            elif type(node) == LTPage:
+                tags.update(self._getattrs(node, 'pageid', 'rotate'))
 
-        # collect attributes of current node
-        tags = self._getattrs(node, 'y0', 'y1', 'x0', 'x1', 'width', 'height', 'bbox', 'linewidth', 'pts', 'index','name','matrix','word_margin' )
-        if type(node) == LTImage:
-            tags.update( self._getattrs(node, 'colorspace','bits','imagemask','srcsize','stream','name','pts','linewidth') )
-        elif type(node) == LTChar:
-            tags.update( self._getattrs(node, 'fontname','adv','upright','size') )
-        elif type(node) == LTPage:
-            tags.update( self._getattrs(node, 'pageid','rotate') )
-          
-        # create node
-        branch = parser.makeelement(node.__class__.__name__, tags)
+            # create node
+            branch = parser.makeelement(node.__class__.__name__, tags)
+
         branch.layout = node
-        self._elements += [branch] # make sure layout keeps state
+        self._elements += [branch]  # make sure layout keeps state
         if root is None:
             root = branch
 
         # add text
         if hasattr(node, 'get_text'):
             branch.text = node.get_text()
-                
+
         # add children if node is an iterable
         if hasattr(node, '__iter__'):
             last = None
@@ -484,12 +508,13 @@ class PDFQuery(object):
                 else:
                     branch.append(child)
                 last = child
-
         return branch
 
     def _getattrs(self, obj, *attrs):
-        """ Return dictionary of given attrs on given object, if they exist, processing through filter_value(). """
-        return dict( (attr, unicode_decode_object(self._filter_value(getattr(obj, attr)))) for attr in attrs if hasattr(obj, attr))
+        """ Return dictionary of given attrs on given object, if they exist,
+        processing through _filter_value().
+        """
+        return dict((attr, unicode_decode_object(self._filter_value(getattr(obj, attr)))) for attr in attrs if hasattr(obj, attr))
 
     def _filter_value(self, val):
         if self.round_floats:
@@ -499,10 +524,7 @@ class PDFQuery(object):
                 val = [self._filter_value(item) for item in val]
         return val
 
-
-
     # page access stuff
-
     def get_page(self, page_number):
         """ Get PDFPage object -- 0-indexed."""
         return self._cached_pages(target_page=page_number)
@@ -512,7 +534,9 @@ class PDFQuery(object):
         if type(page) == int:
             page = self.get_page(page)
         self.interpreter.process_page(page)
-        return self.device.get_result()
+        layout = self.device.get_result()
+        layout = self._add_annots(layout, page.annots)
+        return layout
 
     def get_layouts(self):
         """ Get list of PDFMiner Layout objects for each page. """
@@ -545,6 +569,39 @@ class PDFQuery(object):
                 return None
         self._pages += list(self._pages_iter)
         return self._pages
+
+    def _add_annots(self, layout, annots):
+        """Adds annotations to the layout object
+        """
+        if annots:
+            for annot in annots:
+                annot = annot.resolve()
+                if annot.get('Rect') is not None:
+                    annot['bbox'] = annot.pop('Rect')  # Rename key
+                    annot = self._set_hwxy_attrs(annot)
+                try:
+                    annot['URI'] = annot['A']['URI']
+                except KeyError:
+                    pass
+                for k, v in annot.iteritems():
+                    if not isinstance(v, basestring):
+                        annot[k] = unicode_decode_object(v)
+                elem = parser.makeelement('Annot', annot)
+                layout.add(elem)
+        return layout
+
+    def _set_hwxy_attrs(self, attr):
+        """Using the bbox attribute, set the h, w, x0, x1, y0, and y1
+        attributes.
+        """
+        bbox = attr['bbox']
+        attr['x0'] = bbox[0]
+        attr['x1'] = bbox[2]
+        attr['y0'] = bbox[1]
+        attr['y1'] = bbox[3]
+        attr['height'] = attr['y1'] - attr['y0']
+        attr['width'] = attr['x1'] - attr['x0']
+        return attr
 
 
 if __name__ == "__main__":
