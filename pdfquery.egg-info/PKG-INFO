@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: pdfquery
-Version: 0.2.7
+Version: 0.3.0
 Summary: Concise and friendly PDF scraper using JQuery or XPath selectors.
 Home-page: https://github.com/jcushman/pdfquery
 Author: Jack Cushman
@@ -76,7 +76,7 @@ Description: ========
         Data Models
         ===========
         
-        PDFQuery works by loading a PDF with pdfminer.Layout, converting the layout to an etree with lxml.etree,
+        PDFQuery works by loading a PDF as a pdfminer layout, converting the layout to an etree with lxml.etree,
         and then applying a pyquery wrapper. All three underlying libraries are exposed, so you can use any of their
         interfaces to get at the data you want.
         
@@ -153,7 +153,7 @@ Description: ========
         
             >>> def big_elements():
                 return float(this.get('width',0)) * float(this.get('height',0)) > 40000
-            >>> pdf.pq('LTPage[page_index=1] *').filter(big_elements)
+            >>> pdf.pq('LTPage[page_index="1"] *').filter(big_elements)
             [<LTTextBoxHorizontal>, <LTRect>, <LTRect>]
         
         (If you come up with any particularly useful filters, patch them into pdfquery.py as selectors and submit a pull
@@ -163,11 +163,10 @@ Description: ========
         ====================
         
         PDFQuery accepts an optional caching argument that will store the results of PDF parsing,
-        so subsequent runs on the same file will be much quicker. For example:
+        so subsequent runs on the same file will be much quicker. For example::
         
             from pdfquery.cache import FileCache
-            pdfquery.PDFQuery("tests/samples/IRS_1040A.pdf", parse_tree_cacher=pdfquery.FileCache("/tmp/"))
-        
+            pdfquery.PDFQuery("tests/samples/IRS_1040A.pdf", parse_tree_cacher=FileCache("/tmp/"))
         
         Bulk Data Scraping
         ====================
@@ -195,7 +194,7 @@ Description: ========
         ~~~~~~~~~~~~~
         
         By default, ``extract`` searches the entire tree (or the part of the document loaded earlier by ``load()``,
-        it it was limited to particular pages). If you want to limit the search to a part of the tree that you fetched with
+        if it was limited to particular pages). If you want to limit the search to a part of the tree that you fetched with
         ``pdf.pq()`` earlier, pass that in as the second parameter after the list of searches.
         
         Formatting Functions
@@ -228,7 +227,7 @@ Description: ========
          The ``with_parent`` keyword limits the following searches to children of the parent search. For example::
         
             >>> pdf.extract([
-                 ('with_parent','LTPage[page_index=1]'),
+                 ('with_parent','LTPage[page_index="1"]'),
                  ('last_name', ':in_bbox("315,680,395,700")') # only matches elements on page 1
              ])
         
@@ -368,6 +367,7 @@ Description: ========
         * PyQuery (pdf.pq): pyquery_documentation_.
         
         .. _pyquery_documentation: http://packages.python.org/pyquery/
+        
 Platform: UNKNOWN
 Classifier: Development Status :: 4 - Beta
 Classifier: Topic :: Text Processing
