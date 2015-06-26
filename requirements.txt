@@ -4,4 +4,3 @@ lxml>=3.0
 pdfminer>=20110515
 pyquery>=1.2.2
 roman>=1.4.0
-unittest2>=1.0.1
