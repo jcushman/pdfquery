@@ -155,11 +155,10 @@ Caching
 ====================
 
 PDFQuery accepts an optional caching argument that will store the results of PDF parsing,
-so subsequent runs on the same file will be much quicker. For example:
+so subsequent runs on the same file will be much quicker. For example::
 
     from pdfquery.cache import FileCache
-    pdfquery.PDFQuery("tests/samples/IRS_1040A.pdf", parse_tree_cacher=pdfquery.FileCache("/tmp/"))
-
+    pdfquery.PDFQuery("tests/samples/IRS_1040A.pdf", parse_tree_cacher=FileCache("/tmp/"))
 
 Bulk Data Scraping
 ====================
