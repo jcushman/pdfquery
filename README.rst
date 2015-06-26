@@ -145,7 +145,7 @@ If you need a selector that isn't supported, you can write a filtering function 
 
     >>> def big_elements():
         return float(this.get('width',0)) * float(this.get('height',0)) > 40000
-    >>> pdf.pq('LTPage[page_index=1] *').filter(big_elements)
+    >>> pdf.pq('LTPage[page_index="1"] *').filter(big_elements)
     [<LTTextBoxHorizontal>, <LTRect>, <LTRect>]
 
 (If you come up with any particularly useful filters, patch them into pdfquery.py as selectors and submit a pull
@@ -219,7 +219,7 @@ with_parent
  The ``with_parent`` keyword limits the following searches to children of the parent search. For example::
 
     >>> pdf.extract([
-         ('with_parent','LTPage[page_index=1]'),
+         ('with_parent','LTPage[page_index="1"]'),
          ('last_name', ':in_bbox("315,680,395,700")') # only matches elements on page 1
      ])
 
