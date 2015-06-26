@@ -56,7 +56,7 @@ def _box_in_box(el, child):
     ])
 
 
-_comp_bbox_keys_required = set('x0', 'x1', 'y0', 'y1')
+_comp_bbox_keys_required = set({'x0', 'x1', 'y0', 'y1'})
 def _comp_bbox(el, el2):
     """ Return 1 if el in el2, -1 if el2 in el, else 0"""
     # only compare if both elements have x/y coordinates
@@ -88,13 +88,13 @@ def _flatten(l, ltypes=(list, tuple)):
 
 # these might have to be removed from the start of a decoded string after
 # conversion
-bom_headers = set(
+bom_headers = set({
     unicode(codecs.BOM_UTF8, 'utf8'),
     unicode(codecs.BOM_UTF16_LE, 'utf-16LE'),
     unicode(codecs.BOM_UTF16_BE, 'utf-16BE'),
     unicode(codecs.BOM_UTF32_LE, 'utf-32LE'),
     unicode(codecs.BOM_UTF32_BE, 'utf-32BE'),
-)
+})
 
 
 def smart_unicode_decode(encoded_string):
