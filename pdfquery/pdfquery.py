@@ -628,6 +628,8 @@ class PDFQuery(object):
         """Adds annotations to the layout object
         """
         if annots:
+            if hasattr(annots, 'resolve'):
+                annots = annots.resolve()
             for annot in annots:
                 annot = annot.resolve()
                 if annot.get('Rect') is not None:
