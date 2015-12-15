@@ -532,7 +532,10 @@ class PDFQuery(object):
 
         # add text
         if hasattr(node, 'get_text'):
-            branch.text = node.get_text()
+            try:
+                branch.text = node.get_text()
+            except ValueError:
+                branch.text = ''
 
         # add children if node is an iterable
         if hasattr(node, '__iter__'):
@@ -546,7 +549,7 @@ class PDFQuery(object):
                         last.text += child.text
                         last.set(
                             '_obj_id',
-                            last.get('_obj_id') + "," + child.get('_obj_id')
+                            last.get('_obj_id', '') + "," + child.get('_obj_id', '')
                         )
                         continue
                 # sort children by bounding boxes
