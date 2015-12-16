@@ -1,3 +1,4 @@
+from __future__ import print_function
 # -*- coding: utf-8 -*-
 import codecs
 import numbers
@@ -5,6 +6,9 @@ import re
 import chardet
 
 from pdfminer.pdfparser import PDFParser
+import six
+from six.moves import map
+from six.moves import zip
 
 try:
     # pdfminer < 20131022
@@ -22,8 +26,8 @@ from pdfminer.pdftypes import resolve1
 from pyquery import PyQuery
 from lxml import etree
 import cssselect
-from pdftranslator import PDFQueryTranslator
-from cache import DummyCache
+from .pdftranslator import PDFQueryTranslator
+from .cache import DummyCache
 
 
 # Re-sort the PDFMiner Layout tree so elements that fit inside other elements
@@ -89,11 +93,11 @@ def _flatten(l, ltypes=(list, tuple)):
 # these might have to be removed from the start of a decoded string after
 # conversion
 bom_headers = set({
-    unicode(codecs.BOM_UTF8, 'utf8'),
-    unicode(codecs.BOM_UTF16_LE, 'utf-16LE'),
-    unicode(codecs.BOM_UTF16_BE, 'utf-16BE'),
-    unicode(codecs.BOM_UTF32_LE, 'utf-32LE'),
-    unicode(codecs.BOM_UTF32_BE, 'utf-32BE'),
+    six.text_type(codecs.BOM_UTF8, 'utf8'),
+    six.text_type(codecs.BOM_UTF16_LE, 'utf-16LE'),
+    six.text_type(codecs.BOM_UTF16_BE, 'utf-16BE'),
+    six.text_type(codecs.BOM_UTF32_LE, 'utf-32LE'),
+    six.text_type(codecs.BOM_UTF32_BE, 'utf-32BE'),
 })
 
 
@@ -109,7 +113,7 @@ def smart_unicode_decode(encoded_string):
         return u''
 
     detected_encoding = chardet.detect(encoded_string)
-    decoded_string = unicode(
+    decoded_string = six.text_type(
         encoded_string,
         encoding=detected_encoding['encoding'] or 'utf8',
         errors='replace'
@@ -144,7 +148,7 @@ def unicode_decode_object(obj, top=True):
     elif type(obj) == dict:
         obj_out = dict(
             (unicode_decode_object(k, False),
-             unicode_decode_object(v, False)) for k, v in obj.items()
+             unicode_decode_object(v, False)) for k, v in list(obj.items())
         )
     elif isinstance(obj, numbers.Number):
         # stop numbers embedded in other objects from being turned into unicode
@@ -158,7 +162,7 @@ def unicode_decode_object(obj, top=True):
     # Now let's try converting to unicode:
     try:
         try:
-            return unicode(obj)
+            return six.text_type(obj)
         except UnicodeDecodeError:
             # Probably an encoded-unicode string -- let's try to guess the
             # encoding:
@@ -206,7 +210,7 @@ class QPDFDocument(PDFDocument):
                 page_ranges = resolve1(self.catalog['PageLabels'])['Nums']
                 assert len(page_ranges) > 1 and len(page_ranges) % 2 == 0
                 self.page_range_pairs = list(
-                    reversed(zip(page_ranges[::2], page_ranges[1::2])))
+                    reversed(list(zip(page_ranges[::2], page_ranges[1::2]))))
             except:
                 self.page_range_pairs = []
 
@@ -268,7 +272,7 @@ class LayoutElement(etree.ElementBase):
     @property
     def layout(self):
         if not hasattr(self, '_layout'):
-            print "setting to None"
+            print("setting to None")
             self._layout = None
         return self._layout
 
@@ -395,7 +399,7 @@ class PDFQuery(object):
                 search = list(search) + [formatter]
             key, search, tmp_formatter = search
             if key == 'with_formatter':
-                if isinstance(search, basestring):
+                if isinstance(search, six.string_types):
                     # is a pyquery method name, e.g. 'text'
                     formatter = lambda o, search=search: getattr(o, search)()
                 elif hasattr(search, '__call__') or not search:
@@ -410,7 +414,7 @@ class PDFQuery(object):
                 try:
                     result = parent("*").filter(search) if \
                         hasattr(search, '__call__') else parent(search)
-                except cssselect.SelectorSyntaxError, e:
+                except cssselect.SelectorSyntaxError as e:
                     raise cssselect.SelectorSyntaxError(
                         "Error applying selector '%s': %s" % (search, e))
                 if tmp_formatter:
@@ -449,7 +453,7 @@ class PDFQuery(object):
             # set up root
             root = parser.makeelement("pdfxml")
             if self.doc.info:
-                for k, v in self.doc.info[0].items():
+                for k, v in list(self.doc.info[0].items()):
                     k = unicode_decode_object(k)
                     v = unicode_decode_object(resolve1(v))
                     try:
@@ -612,7 +616,7 @@ class PDFQuery(object):
 
         if target_page >= 0:
             while len(self._pages) <= target_page:
-                next_page = self._pages_iter.next()
+                next_page = next(self._pages_iter)
                 if not next_page:
                     return None
                 next_page.page_number = 0
@@ -639,8 +643,8 @@ class PDFQuery(object):
                     annot['URI'] = annot['A']['URI']
                 except KeyError:
                     pass
-                for k, v in annot.iteritems():
-                    if not isinstance(v, basestring):
+                for k, v in six.iteritems(annot):
+                    if not isinstance(v, six.string_types):
                         annot[k] = unicode_decode_object(v)
                 elem = parser.makeelement('Annot', annot)
                 layout.add(elem)
