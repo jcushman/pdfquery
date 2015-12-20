@@ -16,8 +16,14 @@ else:
 
 from pdfquery.cache import FileCache
 
+from .utils import BaseTestCase
 
-class TestPDFQuery(unittest.TestCase):
+### helpers ###
+
+
+
+
+class TestPDFQuery(BaseTestCase):
     """
         Various tests based on the IRS_1040A sample doc.
     """
@@ -34,25 +40,7 @@ class TestPDFQuery(unittest.TestCase):
         """
             Test that converted XML hasn't changed from saved version.
         """
-        # get current XML for sample file
-        tree_string = StringIO.StringIO()
-        self.pdf.tree.write(tree_string, pretty_print=True, encoding="utf-8")
-        tree_string = tree_string.getvalue()
-
-        # get previous XML
-        # this varies by Python version, because the float handling isn't quite
-        # the same
-        comparison_file = "tests/saved_output/IRS_1040A_output%s.xml" % (
-            "_python_2.6" if sys.version_info[0] == 2 and sys.version_info[1] < 7 else "")
-        with open(comparison_file, 'rb') as f:
-            saved_string = f.read()
-
-        # compare current to previous
-        if tree_string != saved_string:
-            with open("tests/failed_output.xml", "wb") as out:
-                out.write(tree_string)
-            self.fail("XML conversion of sample pdf has changed! Compare %s to "
-                      "tests/failed_output.xml." % comparison_file)
+        self.assertValidOutput(self.pdf, "IRS_1040A_output")
 
     def test_selectors(self):
         """
@@ -106,7 +94,7 @@ class TestPDFQuery(unittest.TestCase):
         self.assertEqual(self.pdf.tree.getroot()[0].get('page_label'), '1')
 
 
-class TestDocInfo(unittest.TestCase):
+class TestDocInfo(BaseTestCase):
 
     def test_docinfo(self):
 
@@ -143,7 +131,7 @@ class TestDocInfo(unittest.TestCase):
             )
 
 
-class TestUnicode(unittest.TestCase):
+class TestUnicode(BaseTestCase):
 
     def test_unicode_text(self):
         pdf = pdfquery.PDFQuery("tests/samples/bug18.pdf")
@@ -159,7 +147,7 @@ class TestUnicode(unittest.TestCase):
         pdf.load(2)  # throws error if we fail to strip ascii control characters -- see issue #39
 
 
-class TestAnnotations(unittest.TestCase):
+class TestAnnotations(BaseTestCase):
     """
         Ensure that annotations such as links are getting added to the PDFs
         properly, as discussed in issue #28.
@@ -177,22 +165,7 @@ class TestAnnotations(unittest.TestCase):
         """
             Test that converted XML hasn't changed from saved version.
         """
-        # get current XML for sample file
-        tree_string = StringIO.StringIO()
-        self.pdf.tree.write(tree_string, pretty_print=True, encoding="utf-8")
-        tree_string = tree_string.getvalue()
-
-        # get previous XML
-        comparison_file = 'tests/saved_output/bug28.xml'
-        with open(comparison_file, 'rb') as f:
-            saved_string = f.read()
-
-        # compare current to previous
-        if tree_string != saved_string:
-            with open("tests/failed_output.xml", "wb") as out:
-                out.write(tree_string)
-            self.fail("XML conversion of sample pdf has changed! Compare %s "
-                      "to tests/failed_output.xml." % comparison_file)
+        self.assertValidOutput(self.pdf, "bug28_output")
 
 if __name__ == '__main__':
     unittest.main()
