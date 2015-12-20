@@ -5,7 +5,7 @@
 # pip install nose
 # nosetests --pdb
 
-import StringIO
+from six import StringIO
 import sys
 import pdfquery
 
@@ -125,10 +125,8 @@ class TestDocInfo(BaseTestCase):
         for file_path, expected_results in doc_info_results:
             pdf = pdfquery.PDFQuery(file_path)
             pdf.load(None)
-            self.assertDictEqual(
-                dict(pdf.tree.getroot().attrib),
-                expected_results
-            )
+            docinfo = dict(pdf.tree.getroot().attrib)
+            self.assertDictEqual(docinfo,expected_results)
 
 
 class TestUnicode(BaseTestCase):

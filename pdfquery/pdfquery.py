@@ -278,7 +278,6 @@ class LayoutElement(etree.ElementBase):
     @property
     def layout(self):
         if not hasattr(self, '_layout'):
-            print("setting to None")
             self._layout = None
         return self._layout
 
