@@ -169,6 +169,12 @@ def unicode_decode_object(obj, top=True):
         return "[decode error]"
 
 
+# via http://stackoverflow.com/a/25920392/307769
+invalid_xml_chars_re = re.compile(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\u10000-\u10FFFF]+')
+def strip_invalid_xml_chars(s):
+    return invalid_xml_chars_re.sub('', s)
+
+
 # custom PDFDocument class
 class QPDFDocument(PDFDocument):
     def get_page_number(self, index):
@@ -532,7 +538,7 @@ class PDFQuery(object):
 
         # add text
         if hasattr(node, 'get_text'):
-            branch.text = node.get_text()
+            branch.text = strip_invalid_xml_chars(node.get_text())
 
         # add children if node is an iterable
         if hasattr(node, '__iter__'):
@@ -546,7 +552,7 @@ class PDFQuery(object):
                         last.text += child.text
                         last.set(
                             '_obj_id',
-                            last.get('_obj_id') + "," + child.get('_obj_id')
+                            last.get('_obj_id','') + "," + child.get('_obj_id','')
                         )
                         continue
                 # sort children by bounding boxes

@@ -151,6 +151,10 @@ class TestUnicode(unittest2.TestCase):
              u'\u7279\u5bf6\u7cbe\u88fd\u8c6c\u6cb9')
         )
 
+    def test_invalid_xml_characters(self):
+        pdf = pdfquery.PDFQuery("tests/samples/bug39.pdf")
+        pdf.load(2)  # throws error if we fail to strip ascii control characters -- see issue #39
+
 
 class TestAnnotations(unittest2.TestCase):
     """
