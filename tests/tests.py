@@ -6,7 +6,7 @@
 # pip install nose
 # nosetests --pdb
 
-import StringIO
+from six import StringIO
 import sys
 import pdfquery
 import unittest2
@@ -32,7 +32,7 @@ class TestPDFQuery(unittest2.TestCase):
             Test that converted XML hasn't changed from saved version.
         """
         # get current XML for sample file
-        tree_string = StringIO.StringIO()
+        tree_string = StringIO()
         self.pdf.tree.write(tree_string, pretty_print=True, encoding="utf-8")
         tree_string = tree_string.getvalue()
 
@@ -134,10 +134,8 @@ class TestDocInfo(unittest2.TestCase):
         for file_path, expected_results in doc_info_results:
             pdf = pdfquery.PDFQuery(file_path)
             pdf.load(None)
-            self.assertDictEqual(
-                dict(pdf.tree.getroot().attrib),
-                expected_results
-            )
+            docinfo = dict(pdf.tree.getroot().attrib)
+            self.assertDictEqual(docinfo,expected_results)
 
 
 class TestUnicode(unittest2.TestCase):
@@ -175,7 +173,7 @@ class TestAnnotations(unittest2.TestCase):
             Test that converted XML hasn't changed from saved version.
         """
         # get current XML for sample file
-        tree_string = StringIO.StringIO()
+        tree_string = StringIO()
         self.pdf.tree.write(tree_string, pretty_print=True, encoding="utf-8")
         tree_string = tree_string.getvalue()
 
