@@ -1,6 +1,5 @@
 # to run:
-# pip install unittest2
-# unit2 discover
+# python setup.py test
 #
 # to debug:
 # pip install nose
@@ -9,12 +8,16 @@
 import StringIO
 import sys
 import pdfquery
-import unittest2
+
+if sys.version_info[:2] < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 
 from pdfquery.cache import FileCache
 
 
-class TestPDFQuery(unittest2.TestCase):
+class TestPDFQuery(unittest.TestCase):
     """
         Various tests based on the IRS_1040A sample doc.
     """
@@ -103,7 +106,7 @@ class TestPDFQuery(unittest2.TestCase):
         self.assertEqual(self.pdf.tree.getroot()[0].get('page_label'), '1')
 
 
-class TestDocInfo(unittest2.TestCase):
+class TestDocInfo(unittest.TestCase):
 
     def test_docinfo(self):
 
@@ -140,7 +143,7 @@ class TestDocInfo(unittest2.TestCase):
             )
 
 
-class TestUnicode(unittest2.TestCase):
+class TestUnicode(unittest.TestCase):
 
     def test_unicode_text(self):
         pdf = pdfquery.PDFQuery("tests/samples/bug18.pdf")
@@ -156,7 +159,7 @@ class TestUnicode(unittest2.TestCase):
         pdf.load(2)  # throws error if we fail to strip ascii control characters -- see issue #39
 
 
-class TestAnnotations(unittest2.TestCase):
+class TestAnnotations(unittest.TestCase):
     """
         Ensure that annotations such as links are getting added to the PDFs
         properly, as discussed in issue #28.
@@ -192,4 +195,4 @@ class TestAnnotations(unittest2.TestCase):
                       "to tests/failed_output.xml." % comparison_file)
 
 if __name__ == '__main__':
-    unittest2.main()
+    unittest.main()
