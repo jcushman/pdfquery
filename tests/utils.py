@@ -12,6 +12,11 @@ class BaseTestCase(unittest.TestCase):
         """
             Test that converted XML hasn't changed from saved version.
         """
+        # Just skip this test if we're on python 2.6 -- float handling makes element sort ordering unpredictable,
+        # causing intermittent test failures.
+        if sys.version_info[:2] < (2, 7):
+            return
+
         # get current XML for sample file
         tree_string = StringIO.StringIO()
         pdf.tree.write(tree_string, pretty_print=True, encoding="utf-8")
@@ -20,9 +25,7 @@ class BaseTestCase(unittest.TestCase):
         # get previous XML
         # this varies by Python version, because the float handling isn't quite
         # the same
-        comparison_file = "tests/saved_output/%s%s.xml" % (
-            output_name,
-            "_python_2.6" if sys.version_info[0] == 2 and sys.version_info[1] < 7 else "")
+        comparison_file = "tests/saved_output/%s.xml" % (output_name,)
         with open(comparison_file, 'rb') as f:
             saved_string = f.read()
 

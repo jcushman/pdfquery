@@ -2,12 +2,20 @@
 import sys
 from setuptools import setup, find_packages
 
+# set up tests
 if sys.version_info[:2] < (2, 7):
     tests_require = ['unittest2']
     test_suite = 'unittest2.collector'
 else:
     tests_require = []
     test_suite = 'tests'
+
+# Work around a traceback on Python < 2.7.4 and < 3.3.1
+# http://bugs.python.org/issue15881#msg170215
+try:
+    import multiprocessing  # noqa: unused
+except ImportError:
+    pass
 
 setup(
     name='pdfquery',
