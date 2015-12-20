@@ -5,15 +5,8 @@
 # pip install nose
 # nosetests --pdb
 
-from six import StringIO
 import sys
 import pdfquery
-
-if sys.version_info[:2] < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
-
 from pdfquery.cache import FileCache
 
 from .utils import BaseTestCase
