@@ -12,7 +12,7 @@ env: CFLAGS="-O0"
 #    - $HOME/.cache/pip
 
 before_install:
-
+  - echo hey
 script:
   python setup.py test
 after_success:
