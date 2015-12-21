@@ -5,8 +5,10 @@ PDFQuery
 Concise, friendly PDF scraping using JQuery or XPath syntax.
 ------------------------------------------------------------
 
-[![Build Status](https://travis-ci.org/jcushman/pdfquery.png)](https://travis-ci.org/jcushman/pdfquery)
-
+.. image:: https://travis-ci.org/jcushman/pdfquery.png
+   :alt: Build Status
+   :target: https://travis-ci.org/jcushman/pdfquery
+   
 PDFQuery is a light wrapper around pdfminer, lxml and pyquery. It's designed to reliably extract data from sets of
 PDFs with as little code as possible.
 
