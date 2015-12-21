@@ -15,6 +15,7 @@ env: CFLAGS="-O0"
 install:
   - if [[ $TRAVIS_PYTHON_VERSION < 3 ]]; then pip install -r requirements_py2.txt; fi
   - if [[ $TRAVIS_PYTHON_VERSION > 3 ]]; then pip install -r requirements_py3.txt; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
 script:
   python setup.py test
 after_success:

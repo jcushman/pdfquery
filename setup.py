@@ -7,10 +7,8 @@ print("imported tests")
 
 # set up tests
 if sys.version_info[:2] < (2, 7):
-    tests_require = ['unittest2']
     test_suite = 'unittest2.collector'
 else:
-    tests_require = []
     test_suite = 'tests'
 
 # Work around a traceback on Python < 2.7.4 and < 3.3.1
@@ -42,6 +40,5 @@ setup(
         "Programming Language :: Python",
         ],
 
-    tests_require=tests_require,
     test_suite=test_suite,
 )
