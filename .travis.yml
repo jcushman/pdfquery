@@ -7,10 +7,9 @@ python:
   - "3.5"
 env: CFLAGS="-O0"
 
-#cache:
-#  directories:
-#    - $HOME/.cache/pip
-
+cache:
+  directories:
+    - $HOME/.cache/pip
 
 install:
   - if [[ $TRAVIS_PYTHON_VERSION < 3 ]]; then pip install -r requirements_py2.txt; fi
