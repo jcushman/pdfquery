@@ -3,7 +3,7 @@ import sys
 from setuptools import setup, find_packages
 
 import tests.tests
-print "imported tests"
+print("imported tests")
 
 # set up tests
 if sys.version_info[:2] < (2, 7):
