@@ -2,6 +2,5 @@ cssselect>=0.7.1
 chardet
 lxml>=3.0
 pdfminer.six
-six
 pyquery>=1.2.2
 roman>=1.4.0

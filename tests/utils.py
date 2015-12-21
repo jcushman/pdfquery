@@ -1,4 +1,4 @@
-import StringIO
+from six import StringIO
 import sys
 
 if sys.version_info[:2] < (2, 7):
@@ -18,7 +18,7 @@ class BaseTestCase(unittest.TestCase):
             return
 
         # get current XML for sample file
-        tree_string = StringIO.StringIO()
+        tree_string = StringIO()
         pdf.tree.write(tree_string, pretty_print=True, encoding="utf-8")
         tree_string = tree_string.getvalue()
 
