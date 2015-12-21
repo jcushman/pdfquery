@@ -102,7 +102,7 @@ class TestDocInfo(BaseTestCase):
              {'Producer': 'Mac OS X 10.9.3 Quartz PDFContext',
               'Author': 'Brepols Publishers',
               'Creator': 'PDFsharp 1.2.1269-g (www.pdfsharp.com)',
-              'AAPL_Keywords': "[u'Brepols', u'Publishers', u'CTLO']",
+              'AAPL_Keywords': '["Brepols", "Publishers", "CTLO"]',
               'Title': 'Exporter',
               'ModDate': "D:20140614192741Z00'00'",
               'Keywords': 'Brepols, Publishers, CTLO',
@@ -157,6 +157,3 @@ class TestAnnotations(BaseTestCase):
             Test that converted XML hasn't changed from saved version.
         """
         self.assertValidOutput(self.pdf, "bug28_output")
-
-if __name__ == '__main__':
-    unittest.main()

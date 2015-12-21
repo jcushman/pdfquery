@@ -1,12 +1,16 @@
 from __future__ import print_function
 # -*- coding: utf-8 -*-
 import codecs
+import json
 import numbers
 import re
+from collections import OrderedDict
+
 import chardet
 
 from pdfminer.pdfparser import PDFParser
 import six
+from pdfminer.psparser import PSLiteral
 from six.moves import map
 from six.moves import zip
 
@@ -112,6 +116,13 @@ def smart_unicode_decode(encoded_string):
     if not encoded_string:
         return u''
 
+    # optimization -- first try ascii
+    try:
+        return encoded_string.decode('ascii')
+    except UnicodeDecodeError:
+        pass
+
+    # detect encoding
     detected_encoding = chardet.detect(encoded_string)
     decoded_string = six.text_type(
         encoded_string,
@@ -125,52 +136,36 @@ def smart_unicode_decode(encoded_string):
 
     return decoded_string
 
-
-def unicode_decode_object(obj, top=True):
+def prepare_for_json_encoding(obj):
     """
-    Turn an arbitrary object into a unicode string, guessing correct
-    decoding if possible.
-
-    >>> unicode_decode_object([1])
-    u'[1]'
-    >>> unicode_decode_object([{'f': 1}])
-    u"[{'f': 1}]"
+    Convert an arbitrary object into just JSON data types (list, dict, unicode str, int, bool, null).
     """
-    # First we'll apply this recursively to the contents, if object is a
-    # list/dict/tuple.
-    # On the final run we want to fall through and convert the whole thing to a
-    # unicode string, so we don't return in that case.
-    obj_out = None
-    if type(obj) == list:
-        obj_out = [unicode_decode_object(item, False) for item in obj]
-    elif type(obj) == tuple:
-        obj_out = (unicode_decode_object(item, False) for item in obj)
-    elif type(obj) == dict:
-        obj_out = dict(
-            (unicode_decode_object(k, False),
-             unicode_decode_object(v, False)) for k, v in list(obj.items())
+    obj_type = type(obj)
+    if obj_type == list or obj_type == tuple:
+        return [prepare_for_json_encoding(item) for item in obj]
+    if obj_type == dict:
+        # alphabetizing keys lets us compare attributes for equality across runs
+        return OrderedDict(
+            (prepare_for_json_encoding(k),
+             prepare_for_json_encoding(obj[k])) for k in sorted(obj.keys())
         )
-    elif isinstance(obj, numbers.Number):
-        # stop numbers embedded in other objects from being turned into unicode
-        obj_out = obj
+    if obj_type == six.binary_type:
+        return smart_unicode_decode(obj)
+    if obj_type == bool or obj is None or obj_type == six.text_type or isinstance(obj, numbers.Number):
+        return obj
+    if obj_type == PSLiteral:
+        # special case because pdfminer.six currently adds extra quotes to PSLiteral.__repr__
+        return u"/%s" % obj.name
+    return six.text_type(obj)
 
-    if obj_out is not None:
-        if not top:
-            return obj
-        obj = obj_out
-
-    # Now let's try converting to unicode:
-    try:
-        try:
-            return six.text_type(obj)
-        except UnicodeDecodeError:
-            # Probably an encoded-unicode string -- let's try to guess the
-            # encoding:
-            return smart_unicode_decode(obj)
-    except:
-        # This isn't anything we know how to deal with -- just return a
-        # placeholder.
-        return "[decode error]"
+def obj_to_string(obj, top=True):
+    """
+    Turn an arbitrary object into a unicode string. If complex (dict/list/tuple), will be json-encoded.
+    """
+    obj = prepare_for_json_encoding(obj)
+    if type(obj) == six.text_type:
+        return obj
+    return json.dumps(obj)
 
 
 # via http://stackoverflow.com/a/25920392/307769
@@ -263,7 +258,7 @@ class QPDFDocument(PDFDocument):
 
             # decimal arabic
             else:  # if num_type == 'D':
-                page_label = unicode_decode_object(page_label)
+                page_label = obj_to_string(page_label)
 
         # handle string prefix
         if 'P' in label_format:
@@ -459,8 +454,8 @@ class PDFQuery(object):
             root = parser.makeelement("pdfxml")
             if self.doc.info:
                 for k, v in list(self.doc.info[0].items()):
-                    k = unicode_decode_object(k)
-                    v = unicode_decode_object(resolve1(v))
+                    k = obj_to_string(k)
+                    v = obj_to_string(resolve1(v))
                     try:
                         root.set(k, v)
                     except ValueError as e:
@@ -468,7 +463,7 @@ class PDFQuery(object):
                         # that isn't allowed in XML attribute names.
                         # If that happens we just replace non-word characters
                         # with '_'.
-                        if "Invalid attribute name" in e.message:
+                        if "Invalid attribute name" in e.args[0]:
                             k = re.sub('\W', '_', k)
                             root.set(k, v)
 
@@ -483,7 +478,7 @@ class PDFQuery(object):
                     pages = enumerate(self.get_layouts())
                 for n, page in pages:
                     page = self._xmlize(page)
-                    page.set('page_index', unicode_decode_object(n))
+                    page.set('page_index', obj_to_string(n))
                     page.set('page_label', self.doc.get_page_number(n))
                     root.append(page)
                 self._clean_text(root)
@@ -573,7 +568,7 @@ class PDFQuery(object):
         filtered_attrs = {}
         for attr in attrs:
             if hasattr(obj, attr):
-                filtered_attrs[attr] = unicode_decode_object(
+                filtered_attrs[attr] = obj_to_string(
                     self._filter_value(getattr(obj, attr))
                 )
         return filtered_attrs
@@ -582,7 +577,7 @@ class PDFQuery(object):
         if self.round_floats:
             if type(val) == float:
                 val = round(val, self.round_digits)
-            elif hasattr(val, '__iter__'):
+            elif hasattr(val, '__iter__') and not isinstance(val, six.string_types):
                 val = [self._filter_value(item) for item in val]
         return val
 
@@ -650,7 +645,7 @@ class PDFQuery(object):
                     pass
                 for k, v in six.iteritems(annot):
                     if not isinstance(v, six.string_types):
-                        annot[k] = unicode_decode_object(v)
+                        annot[k] = obj_to_string(v)
                 elem = parser.makeelement('Annot', annot)
                 layout.add(elem)
         return layout
