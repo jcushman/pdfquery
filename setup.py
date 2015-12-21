@@ -2,6 +2,9 @@
 import sys
 from setuptools import setup, find_packages
 
+import tests.tests
+print "imported tests"
+
 # set up tests
 if sys.version_info[:2] < (2, 7):
     tests_require = ['unittest2']
@@ -28,7 +31,7 @@ setup(
     description='Concise and friendly PDF scraper using JQuery or XPath selectors.',
     keywords='',
     long_description=open('README.rst').read(),
-    install_requires = open('requirements_py3.txt').read() if sys.version_info >= (3, 0) else open('requirements.txt').read(),
+    install_requires = open('requirements_py3.txt').read() if sys.version_info >= (3, 0) else open('requirements_py2.txt').read(),
     classifiers=[
         "Development Status :: 4 - Beta",
         "Topic :: Text Processing",
