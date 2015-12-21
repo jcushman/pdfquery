@@ -1,19 +1,20 @@
 from __future__ import print_function
 # -*- coding: utf-8 -*-
+
+# builtins
 import codecs
 import json
 import numbers
 import re
-from collections import OrderedDict
-
 import chardet
+try:
+    from collections import OrderedDict
+except ImportError:
+    OrderedDict = dict  # sorry py2.6! Ordering isn't that important for our purposes anyway.
 
-from pdfminer.pdfparser import PDFParser
-import six
+# pdfminer
 from pdfminer.psparser import PSLiteral
-from six.moves import map
-from six.moves import zip
-
+from pdfminer.pdfparser import PDFParser
 try:
     # pdfminer < 20131022
     from pdfminer.pdfparser import PDFDocument, PDFPage
@@ -21,15 +22,20 @@ except ImportError:
     # pdfminer >= 20131022
     from pdfminer.pdfdocument import PDFDocument
     from pdfminer.pdfpage import PDFPage
-
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.layout import LAParams, LTChar, LTImage, LTPage
 from pdfminer.converter import PDFPageAggregator
 from pdfminer.pdftypes import resolve1
 
+# other dependencies
 from pyquery import PyQuery
 from lxml import etree
 import cssselect
+import six
+from six.moves import map
+from six.moves import zip
+
+# local imports
 from .pdftranslator import PDFQueryTranslator
 from .cache import DummyCache
 
