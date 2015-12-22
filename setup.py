@@ -2,9 +2,6 @@
 import sys
 from setuptools import setup, find_packages
 
-import tests.tests
-print("imported tests")
-
 # set up tests
 if sys.version_info[:2] < (2, 7):
     test_suite = 'unittest2.collector'
@@ -20,7 +17,7 @@ except ImportError:
 
 setup(
     name='pdfquery',
-    version='0.3.1',
+    version='0.4.0',
     author=u'Jack Cushman',
     author_email='jcushman@gmail.com',
     packages=find_packages(),
@@ -38,6 +35,13 @@ setup(
         "Intended Audience :: Developers",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.3",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
         ],
 
     test_suite=test_suite,
