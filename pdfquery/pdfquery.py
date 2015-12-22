@@ -646,7 +646,7 @@ class PDFQuery(object):
                     annot['bbox'] = annot.pop('Rect')  # Rename key
                     annot = self._set_hwxy_attrs(annot)
                 try:
-                    annot['URI'] = annot['A']['URI']
+                    annot['URI'] = resolve1(annot['A'])['URI']
                 except KeyError:
                     pass
                 for k, v in six.iteritems(annot):

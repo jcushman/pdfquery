@@ -23,10 +23,7 @@ class TestPDFQuery(BaseTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pdf = pdfquery.PDFQuery(
-            "tests/samples/IRS_1040A.pdf",
-            parse_tree_cacher=FileCache("/tmp/") if sys.argv[1] == 'cache' else None,
-        )
+        cls.pdf = pdfquery.PDFQuery("tests/samples/IRS_1040A.pdf")
         cls.pdf.load()
 
     def test_xml_conversion(self):
@@ -144,16 +141,17 @@ class TestAnnotations(BaseTestCase):
         properly, as discussed in issue #28.
     """
 
-    @classmethod
-    def setUpClass(cls):
-        cls.pdf = pdfquery.PDFQuery(
-            "tests/samples/bug28.pdf",
-            parse_tree_cacher=FileCache("/tmp/") if sys.argv[1] == 'cache' else None,
-        )
-        cls.pdf.load()
-
     def test_xml_conversion(self):
         """
             Test that converted XML hasn't changed from saved version.
         """
-        self.assertValidOutput(self.pdf, "bug28_output")
+        pdf = pdfquery.PDFQuery("tests/samples/bug28.pdf")
+        pdf.load()
+        self.assertValidOutput(pdf, "bug28_output")
+
+    def test_annot_dereferencing(self):
+        """
+            See issue #37.
+        """
+        pdf = pdfquery.PDFQuery("tests/samples/bug37.pdf")
+        pdf.load()
