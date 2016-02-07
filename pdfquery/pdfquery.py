@@ -638,10 +638,8 @@ class PDFQuery(object):
         """Adds annotations to the layout object
         """
         if annots:
-            if hasattr(annots, 'resolve'):
-                annots = annots.resolve()
-            for annot in annots:
-                annot = annot.resolve()
+            for annot in resolve1(annots):
+                annot = resolve1(annot)
                 if annot.get('Rect') is not None:
                     annot['bbox'] = annot.pop('Rect')  # Rename key
                     annot = self._set_hwxy_attrs(annot)

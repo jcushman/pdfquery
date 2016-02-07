@@ -151,7 +151,9 @@ class TestAnnotations(BaseTestCase):
 
     def test_annot_dereferencing(self):
         """
-            See issue #37.
+            See issues #37, #42.
         """
         pdf = pdfquery.PDFQuery("tests/samples/bug37.pdf")
+        pdf.load()
+        pdf = pdfquery.PDFQuery("tests/samples/bug42.pdf")
         pdf.load()
