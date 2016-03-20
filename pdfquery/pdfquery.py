@@ -302,6 +302,7 @@ class PDFQuery(object):
             normalize_spaces=True,
             resort=True,
             parse_tree_cacher=None,
+            laparams=None,
     ):
         # store input
         self.merge_tags = merge_tags
@@ -353,7 +354,8 @@ class PDFQuery(object):
 
         # set up layout parsing
         rsrcmgr = PDFResourceManager()
-        laparams = LAParams(all_texts=True, detect_vertical=True)
+        if laparams is not None:
+            laparams = LAParams(all_texts=True, detect_vertical=True)
         self.device = PDFPageAggregator(rsrcmgr, laparams=laparams)
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
 
