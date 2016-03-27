@@ -262,7 +262,8 @@ Public Methods
                 input_text_formatter=None,
                 normalize_spaces=True,
                 resort=True,
-                parse_tree_cacher=None)
+                parse_tree_cacher=None,
+                laparams={'all_texts':True, 'detect_vertical':True})
 
 Initialization function. Usually you'll only need to pass in the file (file object or path). The rest of the arguments
 control preprocessing of the element tree:
@@ -285,6 +286,9 @@ control preprocessing of the element tree:
 
 *   parse_tree_cacher: an object that knows how to save and load results of parsing a given page range from a given PDF.
     Pass in FileCache('/tmp/') to save caches to the filesystem.
+
+*   laparams: parameters for the ``pdfminer.layout.LAParams`` object used to initialize
+    ``pdfminer.converter.PDFPageAggregator``. Can be `dict`, `LAParams()`, or `None`.
 
 ::
 
