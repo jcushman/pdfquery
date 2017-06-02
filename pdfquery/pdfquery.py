@@ -268,7 +268,7 @@ class QPDFDocument(PDFDocument):
 
         # handle string prefix
         if 'P' in label_format:
-            page_label = label_format['P']+page_label
+            page_label = smart_unicode_decode(label_format['P']) + page_label
 
         return page_label
 
