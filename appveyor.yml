@@ -4,8 +4,9 @@ environment:
     - PYTHON: "C:\\Python27"
     - PYTHON: "C:\\Python33"
     - PYTHON: "C:\\Python34"
-    - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python36"
+    # Appveyor does not currently find the wheels for lxml, and cannot build lxml from source. Disable these for now.
+    #    - PYTHON: "C:\\Python35"
+    #    - PYTHON: "C:\\Python36"
 
 build: off
 
