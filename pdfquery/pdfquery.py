@@ -130,9 +130,12 @@ def smart_unicode_decode(encoded_string):
 
     # detect encoding
     detected_encoding = chardet.detect(encoded_string)
+    # bug 54 -- depending on chardet version, if encoding is not guessed,
+    # either detected_encoding will be None or detected_encoding['encoding'] will be None
+    detected_encoding = detected_encoding['encoding'] if detected_encoding and detected_encoding.get('encoding') else 'utf8'
     decoded_string = six.text_type(
         encoded_string,
-        encoding=detected_encoding['encoding'] or 'utf8',
+        encoding=detected_encoding,
         errors='replace'
     )
 
