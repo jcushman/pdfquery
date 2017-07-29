@@ -4,3 +4,4 @@ build/*
 *.pyc
 tests/*failed_output.xml
 pdfquery.egg-info
+.eggs
