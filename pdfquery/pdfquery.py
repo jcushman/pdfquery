@@ -650,7 +650,7 @@ class PDFQuery(object):
                     annot = self._set_hwxy_attrs(annot)
                 try:
                     annot['URI'] = resolve1(annot['A'])['URI']
-                except KeyError:
+                except:
                     pass
                 for k, v in six.iteritems(annot):
                     if not isinstance(v, six.string_types):
