@@ -8,6 +8,7 @@
 import sys
 import pdfquery
 from pdfquery.cache import FileCache
+import tempfile
 
 from .utils import BaseTestCase
 
@@ -157,3 +158,34 @@ class TestAnnotations(BaseTestCase):
         pdf.load()
         pdf = pdfquery.PDFQuery("tests/samples/bug42.pdf")
         pdf.load()
+
+class TestPageRange(BaseTestCase):
+    """
+        Test various page numbers
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cache_dir = "{}/".format(tempfile.gettempdir())
+        print(cache_dir)
+        cls.pdf = pdfquery.PDFQuery("tests/samples/bug67.pdf", parse_tree_cacher=FileCache(cache_dir))
+
+    def test_page_int(self):
+        self.pdf.load(3)
+        self.assertEqual(len(self.pdf.pq('LTPage')), 1)
+        self.pdf.load(0, 10, 25, 49)
+        self.assertEqual(len(self.pdf.pq('LTPage')), 4)
+
+    def test_page_array(self):
+        self.pdf.load([0, 7, 11])
+        self.assertEqual(len(self.pdf.pq('LTPage')), 3)
+        self.pdf.load([10], [0, 12], [30, 40])
+        self.assertEqual(len(self.pdf.pq('LTPage')), 5)
+
+    def test_page_mixed(self):
+        self.pdf.load([0, 7, 11], [0, 44], 1)
+        self.assertEqual(len(self.pdf.pq('LTPage')), 6)
+
+    def test_page_range(self):
+        self.pdf.load(range(0, 150))
+        self.assertEqual(len(self.pdf.pq('LTPage')), 150)
