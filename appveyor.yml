@@ -10,8 +10,5 @@ environment:
 
 build: off
 
-install:
-  - "%PYTHON%\\python.exe -m pip install lxml"
-
 test_script:
   - "%PYTHON%\\python.exe setup.py test"
