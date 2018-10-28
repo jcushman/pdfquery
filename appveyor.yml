@@ -1,6 +1,4 @@
 environment:
-  global:
-    PIP_ONLY_BINARY: "lxml"
   matrix:
     # http://www.appveyor.com/docs/installed-software#python
     - PYTHON: "C:\\Python27"
@@ -11,6 +9,9 @@ environment:
     - PYTHON: "C:\\Python37"
 
 build: off
+
+install:
+  - "%PYTHON%\\python.exe -m pip install lxml"
 
 test_script:
   - "%PYTHON%\\python.exe setup.py test"
