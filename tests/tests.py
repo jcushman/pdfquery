@@ -161,13 +161,12 @@ class TestAnnotations(BaseTestCase):
 
 class TestPageRange(BaseTestCase):
     """
-        Test various page numbers
+        Test various page number parameters
     """
 
     @classmethod
     def setUpClass(cls):
         cache_dir = "{}/".format(tempfile.gettempdir())
-        print(cache_dir)
         cls.pdf = pdfquery.PDFQuery("tests/samples/bug67.pdf", parse_tree_cacher=FileCache(cache_dir))
 
     def test_page_int(self):
