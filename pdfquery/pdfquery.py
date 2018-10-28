@@ -7,6 +7,8 @@ import json
 import numbers
 import re
 import chardet
+import sys
+import hashlib
 try:
     from collections import OrderedDict
 except ImportError:
@@ -84,7 +86,11 @@ def _comp_bbox(el, el2):
 
 
 # assorted helpers
-def _flatten(l, ltypes=(list, tuple)):
+LTYPES = (list, tuple)
+if sys.version_info.major > 2:
+    LTYPES = (list, tuple, range)
+
+def _flatten(l, ltypes=LTYPES):
     # via http://rightfootin.blogspot.com/2006/09/more-on-python-flatten.html
     ltype = type(l)
     l = list(l)
@@ -458,7 +464,9 @@ class PDFQuery(object):
             Return lxml.etree.ElementTree for entire document, or page numbers
             given if any.
         """
-        cache_key = "_".join(map(str, _flatten(page_numbers)))
+        hasher = hashlib.md5()
+        hasher.update(str(page_numbers).encode('UTF-8'))
+        cache_key = "_{}".format(hasher.hexdigest())
         tree = self._parse_tree_cacher.get(cache_key)
         if tree is None:
             # set up root
