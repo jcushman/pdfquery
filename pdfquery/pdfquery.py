@@ -306,6 +306,7 @@ class PDFQuery(object):
             resort=True,
             parse_tree_cacher=None,
             laparams={'all_texts':True, 'detect_vertical':True},
+            password=''
     ):
         # store input
         self.merge_tags = merge_tags
@@ -337,7 +338,7 @@ class PDFQuery(object):
             doc.set_parser(parser)
         else:
             # pdfminer >= 20131022
-            doc = QPDFDocument(parser)
+            doc = QPDFDocument(parser, password)
             parser.set_document(doc)
         if hasattr(doc, 'initialize'):
             # as of pdfminer==20140328, "PDFDocument.initialize() method is
