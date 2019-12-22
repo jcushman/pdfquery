@@ -180,7 +180,7 @@ def obj_to_string(obj, top=True):
 # via http://stackoverflow.com/a/25920392/307769
 invalid_xml_chars_re = re.compile(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\u10000-\u10FFFF]+')
 def strip_invalid_xml_chars(s):
-    return invalid_xml_chars_re.sub('', s)
+    return invalid_xml_chars_re.sub(r'', s)
 
 
 # custom PDFDocument class
@@ -476,7 +476,7 @@ class PDFQuery(object):
                         # If that happens we just replace non-word characters
                         # with '_'.
                         if "Invalid attribute name" in e.args[0]:
-                            k = re.sub('\W', '_', k)
+                            k = re.sub(r'\W', '_', k)
                             root.set(k, v)
 
             # Parse pages and append to root.
