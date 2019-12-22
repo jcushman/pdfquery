@@ -490,6 +490,8 @@ class PDFQuery(object):
                     pages = enumerate(self.get_layouts())
                 for n, page in pages:
                     page = self._xmlize(page)
+                    if self.resort:
+                        self._sort(page)
                     page.set('page_index', obj_to_string(n))
                     page.set('page_label', self.doc.get_page_number(n))
                     root.append(page)
@@ -571,9 +573,15 @@ class PDFQuery(object):
                 else:
                     branch.append(child)
                 last = child
-        if self.resort:
-            branch[:] = sorted(branch, key=lambda child: (-float(child.get('y1')), float(child.get('x0'))))
         return branch
+
+    def _sort(self, tree):
+        """ Sort same-level elements top to bottom and left to right. """
+        children = list(tree)
+        if children:
+            tree[:] = sorted(children, key=lambda child: (-float(child.get('y1')), float(child.get('x0'))))
+            for child in children:
+                self._sort(child)
 
     def _getattrs(self, obj, *attrs):
         """ Return dictionary of given attrs on given object, if they exist,

@@ -38,6 +38,7 @@ class BaseTestCase(unittest.TestCase):
             output_path = "tests/%s_failed_output.xml" % output_name
             with open(output_path, "wb") as out:
                 out.write(tree_string)
+            e1, e2 = e.args[1:3]
             raise self.failureException("XML conversion of sample pdf has changed! Compare %s to %s" % (comparison_file, output_path)) from e
 
     def xml_strings_equal(self, s1, s2):
@@ -46,11 +47,11 @@ class BaseTestCase(unittest.TestCase):
         """
         # via http://stackoverflow.com/a/24349916/307769
         def elements_equal(e1, e2):
-            if e1.tag != e2.tag: raise self.failureException("Mismatched tags")
-            if e1.text != e2.text: raise self.failureException("Mismatched text")
-            if e1.tail != e2.tail: raise self.failureException("Mismatched tail")
-            if e1.attrib != e2.attrib: raise self.failureException("Mismatched attributes")
-            if len(e1) != len(e2): raise self.failureException("Mismatched children")
+            if e1.tag != e2.tag: raise self.failureException("Mismatched tags", e1, e2)
+            if e1.text != e2.text: raise self.failureException("Mismatched text", e1, e2)
+            if e1.tail != e2.tail: raise self.failureException("Mismatched tail", e1, e2)
+            if e1.attrib != e2.attrib: raise self.failureException("Mismatched attributes %s and %s" % (e1.attrib, e2.attrib), e1, e2)
+            if len(e1) != len(e2): raise self.failureException("Mismatched children", e1, e2)
             for c1, c2 in zip(e1, e2):
                 elements_equal(c1, c2)
 
