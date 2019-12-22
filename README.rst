@@ -286,7 +286,7 @@ control preprocessing of the element tree:
     with a single space.
 
 *   resort: if True, elements will be sorted such that any element fully within the bounding box of another element
-    becomes a child of that element.
+    becomes a child of that element, and elements on the same level are sorted top to bottom, left to right.
 
 *   parse_tree_cacher: an object that knows how to save and load results of parsing a given page range from a given PDF.
     Pass in FileCache('/tmp/') to save caches to the filesystem.

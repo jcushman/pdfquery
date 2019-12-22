@@ -570,6 +570,8 @@ class PDFQuery(object):
                 else:
                     branch.append(child)
                 last = child
+        if self.resort:
+            branch[:] = sorted(branch, key=lambda child: (-float(child.get('y1')), float(child.get('x0'))))
         return branch
 
     def _getattrs(self, obj, *attrs):
