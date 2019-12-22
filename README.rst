@@ -135,7 +135,7 @@ If you're scraping text that might be in different parts of the page, the same b
 but you'll first have to find an element with consistent text that appears a consistent distance from the text you
 want, and then calculate the bbox relative to that element. See the Quick Start for an example of that approach.
 
-If both of those fail, your best bet is to dump the xml using ```pdf.tree.write(filename, pretty_print=True)```,
+If both of those fail, your best bet is to dump the xml using ``pdf.tree.write(filename, pretty_print=True)``,
 and see if you can find any other structure, tags or elements that reliably identify the part you're looking for.
 This is also helpful when you're trying to figure out why your selectors don't match ...
 
@@ -182,7 +182,7 @@ The ``extract`` method simplifies that process. Given a list of keywords and sel
           ('year', ':contains("Form 1040A (")', lambda match: int(match.text()[-5:-1]))
      ])
 
-the ```extract``` method returns a dictionary (by default) with a pyquery result set for each keyword,
+the ``extract`` method returns a dictionary (by default) with a pyquery result set for each keyword,
 optionally processed through the supplied formatting function. In this example the result is::
 
     {'last_name': [<LTTextLineHorizontal>], 'year': 2007}
