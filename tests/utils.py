@@ -32,11 +32,13 @@ class BaseTestCase(unittest.TestCase):
             saved_string = f.read()
 
         # compare current to previous
-        if not self.xml_strings_equal(saved_string, tree_string):
+        try:
+            self.xml_strings_equal(saved_string, tree_string)
+        except self.failureException as e:
             output_path = "tests/%s_failed_output.xml" % output_name
             with open(output_path, "wb") as out:
                 out.write(tree_string)
-            self.fail("XML conversion of sample pdf has changed! Compare %s to %s" % (comparison_file, output_path))
+            raise self.failureException("XML conversion of sample pdf has changed! Compare %s to %s" % (comparison_file, output_path)) from e
 
     def xml_strings_equal(self, s1, s2):
         """
@@ -44,12 +46,13 @@ class BaseTestCase(unittest.TestCase):
         """
         # via http://stackoverflow.com/a/24349916/307769
         def elements_equal(e1, e2):
-            if e1.tag != e2.tag: return False
-            if e1.text != e2.text: return False
-            if e1.tail != e2.tail: return False
-            if e1.attrib != e2.attrib: return False
-            if len(e1) != len(e2): return False
-            return all(elements_equal(c1, c2) for c1, c2 in zip(e1, e2))
+            if e1.tag != e2.tag: raise self.failureException("Mismatched tags")
+            if e1.text != e2.text: raise self.failureException("Mismatched text")
+            if e1.tail != e2.tail: raise self.failureException("Mismatched tail")
+            if e1.attrib != e2.attrib: raise self.failureException("Mismatched attributes")
+            if len(e1) != len(e2): raise self.failureException("Mismatched children")
+            for c1, c2 in zip(e1, e2):
+                elements_equal(c1, c2)
 
         e1 = etree.XML(s1, parser=etree.XMLParser(remove_blank_text=True))
         e2 = etree.XML(s2, parser=etree.XMLParser(remove_blank_text=True))
