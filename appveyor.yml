@@ -1,10 +1,11 @@
 environment:
   matrix:
     # https://www.appveyor.com/docs/windows-images-software/#python
-    - PYTHON: "C:\\Python35"
+    # currently lxml does not successfully install in 3.5 and 3.8
+#    - PYTHON: "C:\\Python35"
     - PYTHON: "C:\\Python36"
     - PYTHON: "C:\\Python37"
-    - PYTHON: "C:\\Python38"
+#    - PYTHON: "C:\\Python38"
 
 build: off
 
