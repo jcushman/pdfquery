@@ -1,12 +1,10 @@
 environment:
   matrix:
-    # http://www.appveyor.com/docs/installed-software#python
-    - PYTHON: "C:\\Python27"
-    - PYTHON: "C:\\Python33"
-    - PYTHON: "C:\\Python34"
-    # Appveyor does not currently find the wheels for lxml, and cannot build lxml from source. Disable these for now.
-    #    - PYTHON: "C:\\Python35"
-    #    - PYTHON: "C:\\Python36"
+    # https://www.appveyor.com/docs/windows-images-software/#python
+    - PYTHON: "C:\\Python35"
+    - PYTHON: "C:\\Python36"
+    - PYTHON: "C:\\Python37"
+    - PYTHON: "C:\\Python38"
 
 build: off
 
