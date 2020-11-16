@@ -62,13 +62,7 @@ def _append_sorted(root, el, comparator):
 
 def _box_in_box(el, child):
     """ Return True if child is contained within el. """
-    return all([
-        float(el.get('x0')) <= float(child.get('x0')),
-        float(el.get('x1')) >= float(child.get('x1')),
-        float(el.get('y0')) <= float(child.get('y0')),
-        float(el.get('y1')) >= float(child.get('y1')),
-    ])
-
+    return (float(el.get('x0')) <= float(child.get('x0'))) and (float(el.get('x1')) >= float(child.get('x1'))) and (float(el.get('y0')) <= float(child.get('y0'))) and (float(el.get('y1')) >= float(child.get('y1')))
 
 _comp_bbox_keys_required = set(['x0', 'x1', 'y0', 'y1'])
 def _comp_bbox(el, el2):
