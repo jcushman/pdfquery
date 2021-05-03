@@ -21,7 +21,7 @@ PDFs with as little code as possible.
 Installation
 ============
 
-``easy_install pdfquery`` or ``pip install pdfquery``.
+``pip install pdfquery``.
 
 Quick Start
 ===========
