@@ -1,4 +1,3 @@
-# builtins
 import codecs
 import hashlib
 import json
@@ -8,26 +7,17 @@ import sys
 from collections import OrderedDict
 
 import chardet
-from pdfminer.pdfparser import PDFParser
-# pdfminer
-from pdfminer.psparser import PSLiteral
-
-try:
-    # pdfminer < 20131022
-    from pdfminer.pdfparser import PDFDocument, PDFPage
-except ImportError:
-    # pdfminer >= 20131022
-    from pdfminer.pdfdocument import PDFDocument
-    from pdfminer.pdfpage import PDFPage
-
 import cssselect
 import six
 from lxml import etree
 from pdfminer.converter import PDFPageAggregator
 from pdfminer.layout import LAParams, LTChar, LTImage, LTPage
+from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfinterp import PDFPageInterpreter, PDFResourceManager
+from pdfminer.pdfpage import PDFPage
+from pdfminer.pdfparser import PDFParser
 from pdfminer.pdftypes import resolve1
-# other dependencies
+from pdfminer.psparser import PSLiteral
 from pyquery import PyQuery
 from six.moves import map, zip
 
@@ -327,19 +317,8 @@ class PDFQuery(object):
                 raise TypeError("File must be file object or filepath string.")
 
         parser = PDFParser(file)
-        if hasattr(QPDFDocument, 'set_parser'):
-            # pdfminer < 20131022
-            doc = QPDFDocument()
-            parser.set_document(doc)
-            doc.set_parser(parser)
-        else:
-            # pdfminer >= 20131022
-            doc = QPDFDocument(parser, password)
-            parser.set_document(doc)
-        if hasattr(doc, 'initialize'):
-            # as of pdfminer==20140328, "PDFDocument.initialize() method is
-            # removed and no longer needed."
-            doc.initialize()
+        doc = QPDFDocument(parser, password)
+        parser.set_document(doc)
         self.doc = doc
         self.parser = parser
         self.tree = None
@@ -626,13 +605,7 @@ class PDFQuery(object):
         so we won't know how many there are until we parse the whole document,
         which we don't want to do until we need to.
         """
-        try:
-            # pdfminer < 20131022
-            self._pages_iter = self._pages_iter or self.doc.get_pages()
-        except AttributeError:
-            # pdfminer >= 20131022
-            self._pages_iter = self._pages_iter or \
-                PDFPage.create_pages(self.doc)
+        self._pages_iter = self._pages_iter or PDFPage.create_pages(self.doc)
 
         if target_page >= 0:
             while len(self._pages) <= target_page:
