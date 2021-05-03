@@ -1,8 +1,10 @@
 # builtins
 import codecs
+import hashlib
 import json
 import numbers
 import re
+import sys
 from collections import OrderedDict
 
 import chardet
@@ -78,13 +80,13 @@ def _comp_bbox(el, el2):
 
 
 # assorted helpers
-def _flatten(l, ltypes=(list, tuple)):
+def _flatten(l):
     # via http://rightfootin.blogspot.com/2006/09/more-on-python-flatten.html
     ltype = type(l)
     l = list(l)
     i = 0
     while i < len(l):
-        while isinstance(l[i], ltypes):
+        while isinstance(l[i], (list, tuple, range)):
             if not l[i]:
                 l.pop(i)
                 i -= 1
@@ -453,7 +455,9 @@ class PDFQuery(object):
             Return lxml.etree.ElementTree for entire document, or page numbers
             given if any.
         """
-        cache_key = "_".join(map(str, _flatten(page_numbers)))
+        hasher = hashlib.md5()
+        hasher.update(str(page_numbers).encode('UTF-8'))
+        cache_key = "_{}".format(hasher.hexdigest())
         tree = self._parse_tree_cacher.get(cache_key)
         if tree is None:
             # set up root
