@@ -22,6 +22,7 @@ Installation
 ============
 
 ``pip install pdfquery``.
+``pip install -e .[test,flake8,docs,release]``
 
 Quick Start
 ===========

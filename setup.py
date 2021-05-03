@@ -15,6 +15,15 @@ try:
 except ImportError:
     pass
 
+
+TESTS_REQUIRE = [
+    'pytest',
+    'tox',
+    'isort',
+    'freezegun',
+    'pre-commit'
+]
+
 setup(
     name='pdfquery',
     version='0.4.3',
@@ -43,6 +52,12 @@ setup(
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         ],
-
+    extras_require=dict(
+        test=TESTS_REQUIRE,
+        pep8=['flake8'],
+        coverage=['pytest-cov'],
+        docs=['sphinx'],
+        release=['zest.releaser'],
+    ),
     test_suite=test_suite,
 )
