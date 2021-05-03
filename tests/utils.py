@@ -2,11 +2,7 @@ from lxml import etree
 
 from six import BytesIO
 import sys
-
-if sys.version_info[:2] < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
+import unittest
 
 # ignore index= attribute in xml comparison, as it is not stable between python versions
 IGNORE_ATTRIBS = {'index'}
@@ -17,11 +13,6 @@ class BaseTestCase(unittest.TestCase):
         """
             Test that converted XML hasn't changed from saved version.
         """
-        # Just skip this test if we're on python 2.6 -- float handling makes element sort ordering unpredictable,
-        # causing intermittent test failures.
-        if sys.version_info[:2] < (2, 7):
-            return
-
         # get current XML for sample file
         tree_string = BytesIO()
         pdf.tree.write(tree_string, pretty_print=True, encoding="utf-8")

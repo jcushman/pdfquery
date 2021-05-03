@@ -1,16 +1,10 @@
-from __future__ import print_function
-# -*- coding: utf-8 -*-
-
 # builtins
 import codecs
 import json
 import numbers
 import re
 import chardet
-try:
-    from collections import OrderedDict
-except ImportError:
-    OrderedDict = dict  # sorry py2.6! Ordering isn't that important for our purposes anyway.
+from collections import OrderedDict
 
 # pdfminer
 from pdfminer.psparser import PSLiteral
