@@ -3,12 +3,13 @@ import codecs
 import json
 import numbers
 import re
-import chardet
 from collections import OrderedDict
 
+import chardet
+from pdfminer.pdfparser import PDFParser
 # pdfminer
 from pdfminer.psparser import PSLiteral
-from pdfminer.pdfparser import PDFParser
+
 try:
     # pdfminer < 20131022
     from pdfminer.pdfparser import PDFDocument, PDFPage
@@ -16,22 +17,21 @@ except ImportError:
     # pdfminer >= 20131022
     from pdfminer.pdfdocument import PDFDocument
     from pdfminer.pdfpage import PDFPage
-from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
-from pdfminer.layout import LAParams, LTChar, LTImage, LTPage
-from pdfminer.converter import PDFPageAggregator
-from pdfminer.pdftypes import resolve1
 
-# other dependencies
-from pyquery import PyQuery
-from lxml import etree
 import cssselect
 import six
-from six.moves import map
-from six.moves import zip
+from lxml import etree
+from pdfminer.converter import PDFPageAggregator
+from pdfminer.layout import LAParams, LTChar, LTImage, LTPage
+from pdfminer.pdfinterp import PDFPageInterpreter, PDFResourceManager
+from pdfminer.pdftypes import resolve1
+# other dependencies
+from pyquery import PyQuery
+from six.moves import map, zip
 
+from .cache import DummyCache
 # local imports
 from .pdftranslator import PDFQueryTranslator
-from .cache import DummyCache
 
 
 # Re-sort the PDFMiner Layout tree so elements that fit inside other elements

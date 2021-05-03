@@ -1,8 +1,8 @@
-from lxml import etree
-
-from six import BytesIO
 import sys
 import unittest
+
+from lxml import etree
+from six import BytesIO
 
 # ignore index= attribute in xml comparison, as it is not stable between python versions
 IGNORE_ATTRIBS = {'index'}

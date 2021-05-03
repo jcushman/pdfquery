@@ -1,6 +1,8 @@
 import hashlib
 import zipfile
+
 from lxml import etree
+
 
 class BaseCache(object):
 
