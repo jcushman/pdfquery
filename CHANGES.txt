@@ -1,3 +1,12 @@
+v0.5.0, 2021-05-03 -- 
+    - #53 Make errorhandling in annotations generic
+    - #67 Fix range() page numbers for Python3 & prevent long cache file names
+    - Remove references to old version of PDFMiner
+    - Fixed an isort issue
+    - Update (un)supported Python versions
+    - Improve performance on large pdfs
+    - Remove reference to deprecated easy_install
+    - Fix two broken testcases
 v0.4.3, 2016-03-27 -- Add laparams parameter to __init__.
 v0.4.2, 2016-02-07 -- Annotations bugfix.
 v0.4.1, 2015-12-21 -- Annotations bugfix.
