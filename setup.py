@@ -12,7 +12,7 @@ TESTS_REQUIRE = [
 
 setup(
     name='pdfquery',
-    version='0.4.3',
+    version='0.5.0',
     author=u'Jack Cushman',
     author_email='jcushman@gmail.com',
     packages=find_packages(),

@@ -1,5 +1,5 @@
 v0.5.0, 2021-05-03 -- 
-    - #53 Make errorhandling in annotations generic
+0.5.0 (2021-05-04)
     - #67 Fix range() page numbers for Python3 & prevent long cache file names
     - Remove references to old version of PDFMiner
     - Fixed an isort issue
