@@ -32,7 +32,11 @@ class TestPDFQuery(BaseTestCase):
         """
             Test that converted XML hasn't changed from saved version.
         """
-        self.assertValidOutput(self.pdf, "IRS_1040A_output")
+        if (sys.version_info[:2] <= (3, 5)):
+            # PDFMiner parses slightly different with Python 3.5
+            self.assertValidOutput(self.pdf, "IRS_1040A_output_py35")
+        else:
+            self.assertValidOutput(self.pdf, "IRS_1040A_output")
 
     def test_selectors(self):
         """
