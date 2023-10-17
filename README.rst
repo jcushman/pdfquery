@@ -27,7 +27,7 @@ Installation as a package
 Installation for development
 ============================
 
-``pip install -e .[test,flake8,docs,release]``
+``pip install -e ".[test,flake8,docs,release]"``
 
 Quick Start
 ===========

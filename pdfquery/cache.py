@@ -5,7 +5,6 @@ from lxml import etree
 
 
 class BaseCache(object):
-
     def __init__(self):
         self.hash_key = None
 
@@ -34,30 +33,34 @@ class DummyCache(BaseCache):
 
 
 class FileCache(BaseCache):
-
-    def __init__(self, directory='/tmp/'):
+    def __init__(self, directory="/tmp/"):
         self.directory = directory
         super(FileCache, self).__init__()
 
     def get_cache_filename(self, page_range_key):
         return "pdfquery_{hash_key}{page_range_key}.xml".format(
-            hash_key=self.hash_key,
-            page_range_key=page_range_key
+            hash_key=self.hash_key, page_range_key=page_range_key
         )
 
     def get_cache_file(self, page_range_key, mode):
         try:
-            return zipfile.ZipFile(self.directory+self.get_cache_filename(page_range_key)+".zip", mode)
+            return zipfile.ZipFile(
+                self.directory + self.get_cache_filename(page_range_key) + ".zip", mode
+            )
         except IOError:
             return None
 
     def set(self, page_range_key, tree):
-        xml = etree.tostring(tree, encoding='utf-8', pretty_print=False, xml_declaration=True)
-        cache_file = self.get_cache_file(page_range_key, 'w')
+        xml = etree.tostring(
+            tree, encoding="utf-8", pretty_print=False, xml_declaration=True
+        )
+        cache_file = self.get_cache_file(page_range_key, "w")
         cache_file.writestr(self.get_cache_filename(page_range_key), xml)
         cache_file.close()
 
     def get(self, page_range_key):
-        cache_file = self.get_cache_file(page_range_key, 'r')
+        cache_file = self.get_cache_file(page_range_key, "r")
         if cache_file:
-            return etree.fromstring(cache_file.read(self.get_cache_filename(page_range_key)))
+            return etree.fromstring(
+                cache_file.read(self.get_cache_filename(page_range_key))
+            )

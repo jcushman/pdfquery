@@ -1,9 +1,7 @@
 language: python
 python:
-  - "3.6"
-  - "3.7"
-  - "3.8"
   - "3.9"
+  - "3.11"
 env: CFLAGS="-O0"
 
 cache:
@@ -11,9 +9,8 @@ cache:
     - $HOME/.cache/pip
 
 install:
-  - pip install -r requirements.txt
-script:
-  python setup.py test
+  - pip install -e .
+script: python setup.py test
 after_success:
   - coveralls
 
