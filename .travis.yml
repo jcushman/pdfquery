@@ -1,9 +1,7 @@
 language: python
 python:
-  - "3.5"
-  - "3.6"
-  - "3.7"
-  - "3.8"
+  - "3.9"
+  - "3.11"
 env: CFLAGS="-O0"
 
 cache:
@@ -11,11 +9,8 @@ cache:
     - $HOME/.cache/pip
 
 install:
-  - if [[ $TRAVIS_PYTHON_VERSION < 3 ]]; then pip install -r requirements_py2.txt; fi
-  - if [[ $TRAVIS_PYTHON_VERSION > 3 ]]; then pip install -r requirements_py3.txt; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
-script:
-  python setup.py test
+  - pip install -e .
+script: python setup.py test
 after_success:
   - coveralls
 

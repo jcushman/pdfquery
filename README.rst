@@ -18,10 +18,16 @@ PDFs with as little code as possible.
 
 .. contents:: **Table of Contents**
 
-Installation
-============
+Installation as a package
+=========================
 
-``easy_install pdfquery`` or ``pip install pdfquery``.
+``pip install pdfquery``
+
+
+Installation for development
+============================
+
+``pip install -e ".[test,flake8,docs,release]"``
 
 Quick Start
 ===========
